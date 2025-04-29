@@ -107,256 +107,338 @@ Los intermediarios también afectan a su economía, por lo que resolver este pro
 
 Resolver estos problemas así como darles mayor visibilidad sería util, así como el trato directo con el artesano.
 
-# Fase 1 - Análisis
+# Fase 1 - Análisis: Camino del Maguey (Nehza Dohba) (Revisión Final)
 
-## **1. Requerimientos de Negocio**  
-### **1.1 Contexto del Proyecto**  
-**Organización:** Comunidad de Mezcaleros "Chichicapam Ancestral".  
-**Tipo:** Comunidad rural organizada (sector agroindustrial-artesanal).  
-**Sector:** Producción y comercialización de bebidas artesanales.  
-**Producto Principal:** Mezcal de agave espadín, elaborado con técnicas zapotecas ancestrales.  
-**Necesidad:**  
-- Eliminar intermediarios que retienen **30-50% de las ganancias**.  
-- Facilitar ventas internacionales directas con **autenticidad cultural garantizada**.  
-**Ubicación:** San Baltazar Chichicapam, Oaxaca (zona con electricidad intermitente y conectividad 3G limitada).  
+## **1. Requerimientos de Negocio**
 
-**Procesos Actuales (BPMN):**  
+### **1.1 Contexto del Proyecto**
+
+- **Nombre del Proyecto:** Camino del Maguey (Nehza Dohba)
+- **Organización:** Iniciativa Comunitaria de Maestros Mezcaleros de San Baltazar Chichicapam.
+- **Tipo:** Comunidad rural organizada (sector agroindustrial-artesanal) con apoyo de iniciativa tecnológica social.
+- **Sector:** Producción y Comercialización Directa de Mezcal Artesanal con enfoque en Autenticidad y Cultura Digital.
+- **Producto Principal:** Plataforma Digital (Web) para conectar productores de mezcal de San Baltazar Chichicapam con compradores finales. Ofrece trazabilidad por lote vía QR, storytelling cultural (incluyendo Zapoteco) y facilita el contacto directo (vía WhatsApp).
+    
+- **Necesidad Crítica:**
+    - Eliminar intermediarios (actualmente retienen **30-50%** de ganancias).
+    - Aumentar visibilidad y acceso a mercados conscientes.
+    - Garantizar autenticidad cultural y trazabilidad simple.
+    - Superar barreras tecnológicas y de conectividad intermitente (diseño _offline-first_).
+- **Ubicación:** San Baltazar Chichicapam, Oaxaca. Área de influencia global para compradores.
+- **Proceso Actual (Simplificado):**
+
 ```mermaid
 graph TD
-    A[Cosecha manual de agave] --> B[Cocción en horno de tierra]
-    B --> C[Fermentación en tinas de madera]
-    C --> D[Destilación en alambique de cobre]
-    D --> E[Etiquetado artesanal]
-    E --> F{Venta en ferias locales o WhatsApp}
-    F --> G{{Pérdida del 40% por intermediarios}}
+    A[Producción Artesanal Mezcal] --> B(Etiquetado Simple)
+    B --> C{Venta Limitada}
+    C -- Vía --> D[Ferias Locales]
+    C -- Vía --> E[WhatsApp/Redes Bajo Alcance]
+    C --> F(Intermediarios Toman 30-50%)
+    F --> G((Ingreso Reducido para Maestro))
 ```
 
----
+- **Proceso Propuesto con Camino del Maguey (Nehza Dohba) (MVP):**
 
-### **1.2 Identificación del Problema**  
-**Problemas Clave:**  
-1. **Intermediación abusiva:** Margen de ganancia de intermediarios: **30-50%** (entrevistas a 15 productores, marzo 2025).  
-2. **Barrera tecnológica:** **70% de artesanos >50 años** no usan comercio electrónico (INEGI 2024).  
-3. **Logística compleja:** Falta de infraestructura para envíos internacionales certificados.  
+```mermaid
+graph TD
+    %% == Actividades del Maestro Mezcalero ==
+    A[Registra Lote App Offline] --> B[Asocia Info/Media];
 
-**Impacto:**  
-- **Reducción del 40% en ingresos** para 12 familias.  
-- **Pérdida de técnicas ancestrales** por falta de valoración internacional.  
+    %% == Plataforma Nehza Dohba ==
+    B --> C[Plataforma: Genera ID/URL];
+    C --> D[Plataforma: Genera QR];
 
-**Solución Actual:**  
-- Publicaciones en WhatsApp con **<100 interacciones promedio**.  
-- Dependencia de **4 ferias locales anuales** para ventas.  
+    %% == Objeto Físico y Acción del Comprador ==
+    D --> K((Botella con QR));
+    K -- Escanea --> E[Comprador: Escanea QR];
+    E --> F[Comprador: Accede Visor Web];
+    F --> G[Comprador: Ve Info Lote, Maestro, Media];
+    G --> H[Comprador: Contacta WhatsApp];
 
----
+    %% == Ciclo Virtuoso y Venta ==
+    H -- Contacta --> A;  
+    A -- Facilita --> I[Venta: Diálogo/Venta Directa];
+    I --> J((Ingreso Justo p/ Maestro));
 
-### **1.3 Objetivos del Negocio**  
-**Misión:**  
-*"Preservar la tradición mezcalera mediante tecnología que garantice comercio justo y conexión cultural global."*  
+    %% == Notas aclaratorias (opcional) ==
+    %% A, B: Realizado por Maestro Mezcalero
+    %% C, D: Realizado por Plataforma
+    %% K: Objeto Físico Intermediario
+    %% E, F, G, H: Realizado por Comprador
+    %% I, J: Resultado del Ciclo Virtuoso
+```
 
-| Objetivo General          | Objetivos Específicos                          | Métricas de Éxito (6 meses)       |  
-|---------------------------|-----------------------------------------------|-----------------------------------|  
-| Reducir intermediación al 15% | 1. Plataforma con perfiles multimedia<br>2. Sistema de trazabilidad QR + blockchain<br>3. Integración pagos/Envíos | - 50 ventas internacionales<br>- 80% de productos con QR validado |  
-
----
-
-### **1.4 Visión del Producto**  
-**Nombre:** **Raíces Conectadas**  
-**Eslogan:** *"Camino del Maguey.(Nehza Dohba)"*  
-**Elevator Pitch:**  
-> *"Camino del Maguey (Nehza Dohba) es una plataforma web que elimina intermediarios en la venta de mezcal artesanal. Cada botella incluye un QR con acceso del maestro mezcalero narrando su proceso en zapoteco, garantizando autenticidad y comercio justo. ¡Conectamos tradición con innovación!"*  
-
-**Ventajas Competitivas:**  
-1. 🎥 **Videos en YouTube** (gratis, sin costos de almacenamiento).  
-2. **Descripción de los productos**
-3. 💳 **Pagos con tarjeta/débito internacional** (Conekta).  
-4. 🚚 **Envíos DHL/Estafeta** con cálculo automático de costos.  
+_(Diagrama corregido para claridad de flujo y conexiones)_
 
 ---
 
-## **2. Alcance del Producto**  
-### **2.1 Diagrama de Contexto**  
+### **1.2 Identificación del Problema**
+
+- **Problemas Clave:**
+    
+    1. **Intermediación Excesiva:** Reduce márgenes de ganancia en **30-50%**, desconectando al productor del valor final (Fuente: Entrevistas preliminares en Chichicapam).
+    2. **Visibilidad Limitada:** Canales actuales (WhatsApp, Facebook bajo alcance, ferias locales) no acceden a mercado nacional/internacional que valora autenticidad.
+    3. **Brecha Digital y de Conectividad:** Dificultad para adoptar e-commerce tradicional por edad (% > 50 años) y conectividad intermitente (3G limitado/electricidad). **Requiere solución offline-first.**
+    4. **Riesgo de Pérdida Cultural:** Falta de valoración económica directa pone en riesgo la transmisión de técnicas ancestrales y el uso del Zapoteco asociado al producto.
+        
+- **Impacto:**
+    
+    - Ingresos insuficientes/variables para familias productoras.
+    - Desconocimiento del origen y proceso por parte del consumidor final.
+    - Pérdida potencial de identidad cultural y lingüística asociada al mezcal.
+        
+- **Solución Actual / Inexistencia:** No existe una plataforma digital diseñada _específicamente_ para las necesidades y contexto de los maestros mezcaleros de Chichicapam, que combine trazabilidad simple, storytelling cultural (Zapoteco) y un modelo de negocio de contacto directo resiliente a la baja conectividad.
+    
+
+---
+
+### **1.3 Objetivos del Negocio (Ajustados al MVP del Hackatec)**
+
+- **Misión:** Empoderar a los Maestros Mezcaleros de San Baltazar Chichicapam para compartir y comercializar su mezcal directamente, preservando su herencia cultural y lingüística (Zapoteco) a través de tecnología accesible.
+- **Objetivo General (Proyecto a Largo Plazo):** Reducir la intermediación drásticamente (<15%) y conectar cultural y comercialmente a la comunidad mezcalera de Chichicapam con un mercado global consciente.
+- **Objetivo del Prototipo (Hackatec - 7 Horas):** **Demostrar un flujo funcional Mínimo Viable (MVP) que valide la conexión directa Productor-Consumidor mediante QR, enfocándose en la autenticidad, el storytelling cultural (video, Zapoteco) y la viabilidad técnica de una solución con capacidad offline.**
+- **Objetivos Específicos (MVP - 7 Horas):**
+    1. **OE1:** Implementar registro básico de `LoteMezcal` (datos clave, enlace video YT, fotos) demostrando una **estrategia funcional para el guardado offline** (simulada si es necesario, pero clara).
+    2. **OE2:** Desarrollar la generación de un ID/URL único por lote y la capacidad de generar un **Código QR** que lo represente.
+    3. **OE3:** Crear un **Visor Web** público que, al recibir el ID del lote, muestre información del lote, datos del maestro (incluyendo placeholder/enlace audio Zapoteco) y video embebido de YouTube.
+    4. **OE4:** Integrar un botón/enlace funcional de **Contacto Directo vía WhatsApp** en el Visor Web.
+        
+- **Métricas de Éxito (Prototipo Hackatec):**
+    
+    - **ME1:** Flujo completo demostrable y funcional: Registro (con simulación offline) -> QR -> Escaneo (simulado) -> Visualización Web -> Clic en Contacto WhatsApp. (**FUNCIONALIDAD CORE**)
+    - **ME2:** Código fuente organizado, comentado y que refleje las decisiones de diseño del MVP. (**CALIDAD TÉCNICA**)
+    - **ME3:** Presentación clara y convincente del problema, la solución MVP, su impacto potencial y la estrategia futura. (**COMUNICACIÓN E IMPACTO**)
+
+---
+
+### **1.4 Visión del Producto (Ajustada)**
+
+- **Nombre:** Camino del Maguey (Nehza Dohba)
+    
+- **Eslogan:** _Conectando Origen y Corazón._
+    
+- **Elevator Pitch:**
+    
+    > Para compradores de mezcal que buscan **autenticidad y conexión real**, **Camino del Maguey (Nehza Dohba)** es una plataforma digital que, mediante un **QR en cada botella**, te lleva a conocer la **historia única del lote y del Maestro Mezcalero de San Baltazar Chichicapam** que lo creó, incluso escuchando su voz en **Zapoteco**. A diferencia de marcas genéricas o intermediarios, facilitamos el **contacto directo vía WhatsApp** para un comercio **justo y transparente**, con una solución diseñada para funcionar **incluso con baja conectividad**. ¡Conectamos tradición, raíz y corazón!
+    
+- **Ventajas Competitivas Clave (MVP):**
+    
+    1. **Trazabilidad Hiperlocal Auténtica:** Conexión directa verificable al maestro y lote específicos de Chichicapam.
+    2. **Storytelling Cultural Profundo:** Valorización de la identidad a través de video, historia y lengua Zapoteca.
+    3. **Comercio Directo Simplificado:** Modelo adaptado al contexto local vía WhatsApp, fomentando la equidad.
+    4. **Diseño Resiliente (Offline-First):** Arquitectura pensada para superar la brecha de conectividad rural.
+        
+
+---
+
+## **2. Alcance del Producto de Software (MVP Hackatec)**
+
+### **2.1 Diagrama de Contexto (Simplificado y Corregido)**
+
 ```mermaid
 graph LR
-    A[Mezcalero] -->|Sube video a YouTube| B(Plataforma Raíces Conectadas)
-    B -->|Genera QR + NFT| C[(Blockchain Polygon)]
-    D[Comprador] -->|Escanea QR| E{{Video en YouTube + Datos NFT}}
-    B -->|Procesa pago| F[Gateway Conekta]
-    F -->|Notificación SMS| A
-    B -->|Coordina envío| G[DHL/Estafeta]
+    subgraph "Entorno Digital"
+        Plataforma[Plataforma Web *Camino del Maguey - Nehza Dohba*]
+        BD[Base de Datos *SQLite/Simple*]
+        AppWeb[App Web/PWA *Reflex*]
+        Plataforma -- Interactúa con --> BD
+        AppWeb -- Es parte de --> Plataforma
+    end
+
+    subgraph "Actores Externos"
+        Maestro[Maestro Mezcalero *Chichicapam*]
+        Comprador[Comprador *Global*]
+        AdminProyecto[Admin Proyecto *Opcional MVP*]
+    end
+
+    subgraph "Servicios Externos"
+        YT[YouTube *Hosting Video*]
+        WApp[WhatsApp *Plataforma Contacto*]
+    end
+
+    Maestro -- Usa (Online/Offline) --> AppWeb
+    AppWeb -- Guarda/Lee --> BD
+    AppWeb -- Genera URL --> QR((Código QR))
+    Maestro -- Pega QR en --> Botella((Botella Mezcal))
+    Comprador -- Escanea --> QR
+    QR -- Redirige a --> Plataforma
+    Plataforma -- Embebe Video de --> YT
+    Plataforma -- Muestra Link para --> WApp
+    Comprador -- Contacta vía --> WApp
+    WApp -- Comunica con --> Maestro
+
+    style BD fill:#ccf,stroke:#333
+    style AppWeb fill:#ccf,stroke:#333
 ```
 
-### **2.2 Árbol de Características**  
+- **Descripción:** El Maestro Mezcalero utiliza la App Web/PWA (con capacidad offline) para registrar lotes y asociar medios (video de YouTube). La plataforma genera una URL única y un QR. El Comprador escanea el QR, accede a la plataforma web, visualiza la información del lote/maestro (incluyendo el video embebido) y puede iniciar contacto directo vía un enlace de WhatsApp.
+
+### **2.2 Árbol de Características (MVP Hackatec)**
+
 ```mermaid
 graph TD
-    A[Raíces Conectadas] --> B[Gestión de Productos]
-    A --> C[Trazabilidad]
-    A --> D[Pagos]
-    A --> E[Logística]
-    B --> B1[Subir video a YouTube]
-    B --> B2[Audio en lengua indígena]
-    C --> C1[QR generado automático]
-    C --> C2[Registro NFT en Polygon]
-    D --> D1[Tarjetas internacionales]
-    D --> D2[Depósito automático CLABE]
-    E --> E1[Cálculo de costos en tiempo real]
-    E --> E2[Seguimiento de envío]
+    A[Camino del Maguey *Nehza Dohba* MVP] --> B(Gestión de Maestros)
+    A --> C(Gestión de Lotes)
+    A --> D(Trazabilidad y Visualización)
+    A --> E(Comunicación Directa)
+
+    B --> B1(Perfil Básico: Nombre, Historia, Contacto WhatsApp)
+    B --> B2(Placeholder/Link Audio Zapoteco)
+    C --> C1(Registro Datos Lote: Agave, Notas, etc.)
+    C --> C2(Asociar Link Video YouTube)
+    C --> C3(Asociar Fotos Lote/Proceso)
+    C --> C4(Estrategia Guardado Offline)
+    D --> D1(Generación ID Único / URL por Lote)
+    D --> D2(Generación de Código QR)
+    D --> D3(Visor Web Público por Lote)
+    D --> D4(Mostrar Info Maestro y Lote)
+    D --> D5(Embeber Video YouTube)
+    E --> E1(Botón/Enlace Contacto WhatsApp Funcional)
+
+    subgraph "Excluido del MVP (Fase Futura)"
+        X1(Pagos Integrados)
+        X2(Registro NFT Blockchain)
+        X3(Gestión Logística)
+        X4(Catálogo Explorable)
+        X5(Admin Avanzado)
+    end
+
+    style C4 fill:#f9f,stroke:#333,stroke-width:2px
 ```
 
----
-
-## **3. Requerimientos de Usuario**  
-### **3.1 Historias de Usuario (MoSCoW)**  
-| ID  | Historia                            | Prioridad | Puntos |     |
-| --- | ----------------------------------- | --------- | ------ | --- |
-| HU1 | Subir video a YouTube y Descripción | Must Have | 8      |     |
-| HU2 | Generar QR con NFT                  | Must Have | 5      |     |
-| HU3 | Procesar pago con tarjeta           | Must Have | 7      |     |
-
-**HU1 Detallada:**  
-```markdown
-ID: HU1  
-Nombre: Subir video del proceso artesanal  
-Usuario: Artesano  
-Peso: 8 puntos  
-Iteración: 1  
-Descripción:  
-Como artesano, necesito subir un video de 2 minutos a YouTube mostrando mi proceso de elaboración.  
-
-Tareas:  
-1. Integración con API de YouTube.  
-2. Interfaz con botón de grabación y subida.  
-3. Almacenar enlace en Firebase.  
-
-Pruebas:  
-- Subir video de prueba y verificar enlace en plataforma.  
-- Validar reproducción offline en PWA.  
-```
+- **Inclusiones Clave MVP:** Registro Maestro/Lote (con estrategia clara offline), asociación video YT/fotos, generación QR, visor web público con info completa y botón funcional de contacto WhatsApp.
+- **Exclusiones Clave MVP:** NFTs, Pagos integrados, Logística, Catálogo complejo, Admin avanzado.
 
 ---
 
-**# Implementación con Reflex (Python)**  
-**Optimizado para desarrollo rápido y usabilidad en comunidades rurales**  
+## **3. Requerimientos de Usuario (MVP Hackatec)**
+
+### **3.1 Historias de Usuario Clave (Priorizadas con MoSCoW)**
+
+|ID|Historia|Prioridad|Puntos|Épica Relacionada|
+|:--|:--|:--|:--|:--|
+|**HU-L1**|Como **Maestro Mezcalero**, quiero registrar los datos básicos de un nuevo lote (agave, notas) y asociar un link de video de YouTube, **pudiendo guardar offline** y sincronizar después.|Must Have|8|Gestión de Lotes|
+|**HU-L2**|Como **Maestro Mezcalero**, quiero que el sistema genere automáticamente un **Código QR único** para cada lote que registro.|Must Have|3|Gestión de Lotes, Trazabilidad|
+|**HU-C2**|Como **Comprador**, al escanear el QR, quiero ver una página web clara con la **info del lote, del maestro, el video del proceso** y sentir que es auténtico.|Must Have|5|Visualización, Experiencia Comprador|
+|**HU-C4**|Como **Comprador**, quiero encontrar fácilmente un **botón para contactar al Maestro vía WhatsApp** directamente desde la página de información del lote.|Must Have|3|Comunicación Directa|
+|HU-M1|Como **Maestro Mezcalero**, quiero tener un perfil básico donde pueda poner mi nombre, una breve historia y mi número de WhatsApp para contacto.|Should Have|5|Gestión de Maestros|
+|HU-L3|Como **Maestro Mezcalero**, quiero poder añadir fotos del proceso o del producto terminado a la información de cada lote.|Should Have|4|Gestión de Lotes|
+|HU-M2|Como **Maestro Mezcalero**, quiero poder incluir un enlace a un archivo de audio con un saludo/historia en Zapoteco en mi perfil.|Could Have|3|Gestión de Maestros, Cultura|
+|HU-A1|Como **Admin del Proyecto**, quiero poder revisar y marcar como "validados" a los maestros registrados (mecanismo simple).|Won't Have|2|Administración|
+
+- **HU-L1 Detallada (Ejemplo con Énfasis en Estrategia Offline):**
+    
+    ```markdown
+    ID: HU-L1
+    Nombre: Registrar Lote de Mezcal con Capacidad Offline
+    Usuario: Maestro Mezcalero
+    Peso: 8 puntos
+    Iteración: 1
+    Descripción:
+    Como Maestro Mezcalero, necesito registrar la información esencial de un nuevo lote de mezcal (agave, notas, link video YT) usando una interfaz simple. **Es CRUCIAL que pueda iniciar y guardar este registro AUNQUE esté offline**, para luego enviarlo/sincronizarlo cuando tenga conexión.
+    
+    Tareas Clave (Diseño/Implementación):
+    1. Interfaz simple para datos del lote + link YT + carga de fotos.
+    2. **Implementar Almacenamiento Local:** Usar `localStorage` o `IndexedDB` (si es PWA con Reflex) o estado persistente simple para guardar datos del formulario temporalmente en el dispositivo del usuario.
+    3. **Detección de Conectividad:** Usar APIs del navegador (`navigator.onLine`) para saber el estado.
+    4. **Mecanismo de Sincronización:** Botón "Guardar Offline" y "Sincronizar Ahora" (o sincronización automática al detectar conexión) que envíe los datos locales al backend.
+    5. Asociar el lote al Maestro.
+    
+    Pruebas de Aceptación (MVP):
+    - [X] Puedo abrir formulario de registro offline.
+    - [X] Puedo llenar campos y guardar **localmente** sin conexión (verificar en DevTools/Estado).
+    - [X] Al conectar y/o presionar "Sincronizar", los datos se envían (verificar petición de red o BD simulada).
+    - [X] Link de YouTube y referencia a fotos (si se implementa) se guardan.
+    ```
+    
 
 ---
 
-## **4. Plan y Viabilidad**  
-### **4.1 Cronograma con Reflex (7 Horas)**  
+## **4. Plan y Viabilidad (MVP Hackatec - 7 Horas)**
+
+### **4.1 Cronograma con Reflex (Ajustado y Realista)**
+
 ```mermaid
 gantt
-    title Desarrollo Express con Reflex
-    dateFormat  HH:mm
+    title Cronograma MVP "Camino del Maguey (Nehza Dohba)" (7 Horas)
+    dateFormat HH:mm
     axisFormat %H:%M
 
-    section Configuración
-    Instalar Reflex y dependencias :09:00, 30min
+    section Configuración y Base (0:45)
+    Config. Inicial Reflex + SQLite Schema        :done, 00:00, 45min
 
-    section Desarrollo
-    Autenticación SMS (Twilio API) :09:30, 1h
-    Subida de videos a YouTube :10:30, 2h
-    Generación QR + Enlace :12:30, 1h
-    Integración Conekta (Pagos) :13:30, 1h
+    section Desarrollo Core (4:15)
+    Backend: Modelos Datos + API básica           :active, 00:45, 60min
+    Frontend: Formulario Lote + Guardado Offline  :active, 01:45, 75min
+    Backend: Lógica ID/URL + Gen QR               :active, 03:00, 30min
+    Frontend: Visor Web + API + YT                :active, 03:30, 90min
 
-    section Pruebas
-    Flujo completo de venta :14:30, 30min
+    section Integración y Finalización (2:00)
+    Botón WhatsApp Funcional                      :active, 05:00, 30min
+    Pruebas E2E + Ajustes UI/UX                   :active, 05:30, 60min
+    Demo + Memoria Técnica Final                  :active, 06:30, 30min
+
 ```
 
-### **4.2 Stack Técnico Simplificado**  
-| Componente       | Herramienta                  | Justificación                                      |  
-|------------------|-----------------------------|---------------------------------------------------|  
-| **Frontend**     | Reflex (Python)             | Desarrollo full-stack en un solo lenguaje          |  
-| **Base de Datos**| SQLite                      | Sin configuración de servidores (embedded)         |  
-| **Pagos**        | Conekta API                 | Soporte para tarjetas y SPEI en México             |  
-| **Blockchain**   | Polygon + Alchemy API       | NFTs de bajo costo con Python (web3.py)            |  
+- **Nota:** La **simulación** del guardado offline es clave para la demo en 7h. Explicar claramente la arquitectura _real_ (PWA, Service Workers, IndexedDB/SQLite) en la presentación/memoria.
 
-**Código Base con Reflex:**  
-```python
-# main.py
-import reflex as rx
-import qrcode
-from youtube_upload.client import YoutubeUploader
+### **4.2 Stack Técnico (Enfocado en MVP)**
 
-class State(rx.State):
-    video_path: str = ""
-    youtube_url: str = ""
-    qr_img: str = ""
+|Componente|Herramienta Propuesta|Justificación (Hackatec MVP)|
+|:--|:--|:--|
+|**Framework Web**|**Reflex (Python)**|Desarrollo rápido Fullstack en Python. Ideal si el equipo tiene experiencia. Permite crear UI interactiva.|
+|**Base de Datos**|**SQLite**|Simple, sin servidor, ideal para MVP. Puede usarse en backend y potencialmente en frontend (PWA).|
+|**Gestión QR**|**Librería `qrcode` (Python)**|Estándar y fácil para generar QR desde la URL generada.|
+|**Hosting Video**|**YouTube**|Solución robusta y gratuita para videos. Se gestiona externamente, la app solo enlaza.|
+|**Comunicación**|**Link Directo WhatsApp (`wa.me`)**|Efectivo, sin costo, sin API compleja para MVP, usa app existente.|
+|**Hosting App MVP**|**Render / PythonAnywhere (Free)**|Despliegue rápido y gratuito para prototipos Python/Reflex.|
+|~~_Pagos_~~|_~~(Conekta API)~~_|_Deferido del MVP - Complejidad Alta_|
+|~~_Blockchain_~~|_~~(Polygon + web3.py)~~_|_Deferido del MVP - Complejidad Alta_|
 
-    def upload_to_youtube(self):
-        uploader = YoutubeUploader()
-        uploader.upload(self.video_path)
-        self.youtube_url = uploader.get_url()
+### **4.3 Viabilidad Simplificada (Hackatec)**
 
-    def generate_qr(self):
-        qr = qrcode.make(self.youtube_url)
-        qr.save("qr_artesano.png")
-        self.qr_img = "qr_artesano.png"
-
-def index():
-    return rx.center(
-        rx.vstack(
-            rx.upload(rx.text("Subir video"), 
-            rx.button("Subir a YouTube", on_click=State.upload_to_youtube),
-            rx.image(src=State.qr_img),
-            spacing="2em"
-        ),
-        padding="2em"
-    )
-
-app = rx.App()
-app.add_page(index)
-```
+- **Técnica:** **Viable.** El MVP simplificado es alcanzable. El stack es manejable. **Reto principal:** Demostrar convincentemente la capacidad offline (incluso simulada) y explicar la arquitectura robusta planeada.
+- **Económica:** **Muy Alta.** Costos operativos del MVP cercanos a cero. El modelo de negocio se basa en habilitar ventas directas, no en monetizar la plataforma directamente (al menos inicialmente).
+- **Operativa:** **Alta (Conceptual).** El éxito a largo plazo depende de la **simplicidad de la interfaz** para los maestros y de la **capacitación/soporte**. El uso de WhatsApp reduce la curva de aprendizaje. La participación comunitaria es clave y un punto fuerte de este equipo.
+    
 
 ---
 
-## **5. Documentación Técnica**  
-### **5.1 Configuración Express**  
-1. **Instalar dependencias:**  
-```bash
-pip install reflex youtube-upload-client qrcode[pil] web3
-```
+## **5. Documentación Técnica (Base para MVP)**
 
-2. **Variables de entorno (.env):**  
-```env
-TWILIO_SID=tu_sid
-TWILIO_TOKEN=tu_token
-CONEKTA_API_KEY=key_xxxx
-POLYGON_RPC_URL=https://polygon-rpc.com
-```
+### **5.1 Configuración Express (Ajustada)**
 
-### **5.2 Flujo Clave**  
-1. **Subida de video:**  
-   - Usa la librería `youtube-upload-client` para subir directamente desde Python.  
-   - Los artesanos solo necesitan hacer clic en "Subir video" (sin manejar APIs).  
+1. **Instalar dependencias:**
+    ```bash
+    pip install reflex qrcode[pil]
+    # Posiblemente: sqlalchemy (si se usa con SQLite en backend Reflex)
+    ```
+    
+2. **Variables de entorno (`.env`) - Mínimas:**
+    ```env
+    # URL base para construir los enlaces del QR
+    PLATFORM_BASE_URL=https://camino-del-maguey-mvp.onrender.com
+    ```
 
-2. **Generación de QR:**  
-   - Crea códigos QR estáticos vinculados al video de YouTube.  
-   - Se almacena localmente para acceso offline.  
+### **5.2 Flujo Clave (Simplificado)**
 
-3. **Pagos con tarjeta:**  
-   - Conekta procesa pagos internacionales y deposita directamente a la cuenta CLABE del artesano.  
+1. **Registro de Lote (Maestro):** Usa interfaz Reflex (PWA). Ingresa datos + link YT. **Guarda localmente** (simulado con estado/localStorage). Opcional: Sincroniza al detectar conexión -> Backend guarda en SQLite.
+2. **Generación de QR (Sistema):** Backend genera ID único (`idLote`), construye URL (`PLATFORM_BASE_URL/lote/idLote`), genera imagen QR (`qrcode`). Muestra QR al maestro.
+3. **Visualización (Comprador):** Escanea QR -> Accede URL -> Reflex routea -> Backend consulta BD por `idLote` -> Frontend renderiza info (datos lote/maestro, video YT embebido, botón `wa.me/NumMaestro`).
 
 ---
 
-## **6. Costos Operativos**  
-| Recurso                             | Costo Mensual         |     |
-| ----------------------------------- | --------------------- | --- |
-| Hosting (Render)                    | $0 (Plan Free)        |     |
-| Twilio SMS                          | $0.0075 por SMS       |     |
-| Polygon NFTs                        | $0.01 por transacción |     |
-| **Total Estimado (100 ventas/mes)** | **$2.75 USD**         |     |
+## **6. Costos Operativos (Estimación MVP)**
 
----
+|Recurso|Costo Mensual (Estimado)|Notas|
+|:--|:--|:--|
+|Hosting App (Free Tier)|$0|Render, PythonAnywhere, etc.|
+|Base de Datos (SQLite)|$0|Incluida en hosting.|
+|YouTube Hosting|$0|Gratuito.|
+|WhatsApp Links|$0|Funcionalidad gratuita.|
+|**Total Estimado MVP**|**~$0 USD**|**Modelo de muy bajo costo operativo.**|
 
-## **7. Equipo Técnico**  
-| Nombre | Rol        | Tecnologías Clave  |     |
-| ------ | ---------- | ------------------ | --- |
-| Ángel  | Backend    | Python/Reflex/APIs |     |
-| Eric   | Frontend   | Reflex/UI Design   |     |
-| Manuel | Blockchain | Solidity/Polygon   |     |
 
-**Repositorio GitHub:**  
-```
-https://github.com/camino_del_maguey/reflex-mvp
-``` 
 
 # Fase 2 - Diseño: Raíces Conectadas / Origen Chichicapam
 
