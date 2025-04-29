@@ -1,2 +1,4 @@
-
-reflex==0.7.9
+reflex==0.4.9  # O usa 0.4.9 si prefieres intentar con esa
+pydantic<2,>=1.10.0  # <-- ¡AÑADE O ASEGURA ESTA LÍNEA!
+qrcode[pil]==7.4.2
+python-dotenv==1.0.1

@@ -1,39 +1,24 @@
-"""Welcome to Reflex! This file outlines the steps to create a basic app."""
+# camino_del_maguey/camino_del_maguey.py
 
 import reflex as rx
 
-from rxconfig import config
+# Importar las funciones de página para que Reflex las descubra con @rx.page
+from .pages.index_page import index
+from .pages.registration_page import registration_page
+from .pages.lote_viewer_page import lote_viewer_page
+from .pages.lotes_list_page import lotes_list_page
 
+# Crear la instancia de la aplicación
+# Reflex encontrará automáticamente las páginas decoradas con @rx.page
+app = rx.App(
+    theme=rx.theme(
+        accent_color="amber",
+        gray_color="sand",
+        radius="medium",
+        appearance="light" # Puedes forzar 'light' o 'dark' o dejar 'inherit'
+    ),
+    # Puedes añadir estilos globales aquí si lo necesitas
+    # style={"font_family": "Inter, sans-serif"},
+)
 
-class State(rx.State):
-    """The app state."""
-
-    ...
-
-
-def index() -> rx.Component:
-    # Welcome Page (Index)
-    return rx.container(
-        rx.color_mode.button(position="top-right"),
-        rx.vstack(
-            rx.heading("Welcome to Reflex!", size="9"),
-            rx.text(
-                "Get started by editing ",
-                rx.code(f"{config.app_name}/{config.app_name}.py"),
-                size="5",
-            ),
-            rx.link(
-                rx.button("Check out our docs!"),
-                href="https://reflex.dev/docs/getting-started/introduction/",
-                is_external=True,
-            ),
-            spacing="5",
-            justify="center",
-            min_height="85vh",
-        ),
-        rx.logo(),
-    )
-
-
-app = rx.App()
-app.add_page(index)
+# No es necesario llamar a app.add_page() si usas decoradores
