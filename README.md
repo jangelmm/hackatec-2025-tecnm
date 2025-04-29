@@ -1,7 +1,5 @@
 # Descripción
 
-**"Innovación con Raíces: Nuevas Formas de Comercializar la Artesanía Oaxaqueña sin Perder su Esencia"**
-
 ## Contexto del Reto
 
 Oaxaca es una de las entidades con mayor riqueza cultural de México. Desde textiles zapotecos hasta barro negro, las artesanías oaxaqueñas son reconocidas a nivel mundial por su autenticidad, simbolismo y técnica. Sin embargo, la mayoría de los artesanos enfrentan barreras estructurales para comercializar sus productos de manera justa, sostenible y directa.
