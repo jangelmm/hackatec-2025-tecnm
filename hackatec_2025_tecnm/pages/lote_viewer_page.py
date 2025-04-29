@@ -31,7 +31,7 @@ def lote_viewer_page() -> rx.Component:
             State.viewer_error_message & ~State.is_loading_lote,
             rx.center(
                 rx.callout.root(
-                    rx.callout.icon(rx.icon("alert-circle")),
+                    rx.callout.icon(rx.icon("circle_alert")),
                     rx.callout.text(State.viewer_error_message),
                     color_scheme="red",
                     size="2"
@@ -51,7 +51,7 @@ def lote_viewer_page() -> rx.Component:
                          rx.cond(
                              State.current_lote_data["foto_perfil_url"],
                              rx.avatar(fallback="M", src=State.current_lote_data["foto_perfil_url"], size="6", radius="full", high_contrast=True),
-                             rx.avatar(fallback=State.current_lote_data["nombre_maestro"][0], size="6", radius="full", high_contrast=True)
+                             rx.avatar(fallback=State.current_lote_data["nombre_maestro"].to(str)[0], size="6", radius="full", high_contrast=True)
                          ),
                          # Info Maestro y Contacto
                          rx.vstack(
@@ -64,7 +64,7 @@ def lote_viewer_page() -> rx.Component:
                                  ),
                                  href=rx.cond(
                                      State.current_lote_data["whatsapp_maestro"],
-                                     "https://wa.me/" + State.current_lote_data["whatsapp_maestro"],
+                                     f"https://wa.me/{State.current_lote_data['whatsapp_maestro']}",
                                      "#"
                                  ),
                                  is_external=True
@@ -143,7 +143,7 @@ def lote_viewer_page() -> rx.Component:
                 rx.box(
                      rx.heading("Trazabilidad", size="3", margin_bottom="0.3em", margin_top="2em"),
                      rx.text(f"ID del Lote:", rx.code(State.current_lote_data['id_lote']), size="2"),
-                     rx.text(f"URL:", rx.code_block(State.current_lote_data['url_qr_plataforma'], can_copy=True, language="text"), size="2"),
+                     rx.text(f"URL:", rx.code_block(State.current_lote_data['url_qr_plataforma'], can_copy=True, language="markup"), size="2"),
                      margin_top="2em", padding="1em", border="1px solid var(--gray-a5)", border_radius="var(--radius-2)", width="100%"
                 ),
 

@@ -122,7 +122,7 @@ def registration_page() -> rx.Component:
                              href=State.generated_lote_url,
                              is_external=False # Navegación interna
                          ),
-                         rx.code_block(State.generated_lote_url, can_copy=True, language="text"),
+                         rx.code_block(State.generated_lote_url, can_copy=True, language="markup"),
                          align="center",
                          spacing="2",
                          border="1px solid var(--gray-a7)",

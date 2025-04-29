@@ -19,12 +19,13 @@ def lotes_list_page() -> rx.Component:
                              rx.link(
                                  rx.hstack(
                                      rx.icon(tag="package", size=18, margin_right="0.5em"),
-                                     rx.text(f"Agave: ", rx.span(lote['tipo_agave'], weight="bold")),
+                                     rx.text("Agave: "), 
+                                     rx.text(lote['tipo_agave'].to(str), weight="bold"),
                                      rx.spacer(),
-                                     rx.badge(lote['id_lote'].split('-')[0], color_scheme="gray"), # Mostrar parte del ID
+                                     rx.badge(lote['id_lote'].to(str).split('-')[0], color_scheme="gray"), 
                                      align="center", width="100%"
                                  ),
-                                 href=lote['url_qr_plataforma'] # Usa la URL guardada
+                                 href=lote['url_qr_plataforma'].to(str)
                              ),
                              width="100%"
                          )
