@@ -13,14 +13,14 @@ def display_info(label: str, value: rx.Var | Any, default_text: str = "No especi
         margin_bottom="1em" # Espacio entre bloques de info
     )
 
-@rx.page(route="/lotes/[lote_id]", title="Detalle del Lote | Camino del Maguey")
+@rx.page(route="/lotes/[lote_id]", title="Detalle del Lote | Camino del Maguey", on_load=State.load_current_lote_on_page_load)
 def lote_viewer_page() -> rx.Component:
     """Página pública que muestra la información de un lote específico."""
     return rx.container(
         # --- Evento on_mount para Cargar Datos ---
         # Usamos rx.call_script para asegurar que State.router.page.params esté disponible
-        rx.script(f"console.log('Montando página para lote:', '{State.router.page.params.get('lote_id')}')"), # Debug en consola del navegador
-        rx.box(on_mount=lambda: State.load_lote_data(State.router.page.params.get("lote_id", ""))),
+        # rx.script(f"console.log('Montando página para lote:', '{State.router.page.params.get('lote_id')}')"), # Debug en consola del navegador
+        # rx.box(on_mount=lambda: State.load_lote_data(State.router.page.params.get("lote_id", ""))),
 
         # --- Manejo de Carga y Errores ---
         rx.cond(

@@ -284,3 +284,11 @@ class State(rx.State):
         print("Cargando lista de todos los lotes...")
         self.all_lotes_list = get_all_lotes_simple()
         print(f"Encontrados {len(self.all_lotes_list)} lotes.")
+
+    def load_current_lote_on_page_load(self):
+        """Manejador para on_load de la página de visor de lote."""
+        # Accede al router desde self
+        lote_id = self.router.page.params.get("lote_id", "")
+        print(f"on_load: Intentando cargar datos para lote_id: '{lote_id}'") # Log para verificar
+        # Llama a la función que ya tenías
+        self.load_lote_data(lote_id)
