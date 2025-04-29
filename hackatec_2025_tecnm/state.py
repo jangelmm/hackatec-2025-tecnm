@@ -100,7 +100,7 @@ class State(rx.State):
         # DEFAULT_MAESTRO_ID = get_default_maestro_id() # <-- Eliminar
 
         # Cargar pendientes desde LocalStorage (async)
-        return State.load_pending_from_storage
+        # return State.load_pending_from_storage
 
     async def load_pending_from_storage(self):
         """Carga los lotes pendientes desde LocalStorage."""
@@ -158,7 +158,7 @@ class State(rx.State):
             # --- Guardado Offline ---
             print("Modo Offline: Guardando lote localmente...")
             self.pending_lotes.append(lote_data_to_save) # Añadir a la lista en memoria
-            await self.set_local_storage(self.LOCAL_STORAGE_KEY, self.pending_lotes) # Actualizar LocalStorage
+            # await self.set_local_storage(self.LOCAL_STORAGE_KEY, self.pending_lotes) # Actualizar LocalStorage
             print(f"Lote añadido a pendientes. Total: {len(self.pending_lotes)}")
             self.sync_message = f"Lote '{lote_data_to_save['tipo_agave']}' guardado offline. {len(self.pending_lotes)} pendiente(s)."
             # Resetear formulario
@@ -215,7 +215,7 @@ class State(rx.State):
                 remaining_pending.append(lote_pendiente) # Añadir a la lista de fallidos
 
         self.pending_lotes = remaining_pending # Actualizar estado con los fallidos
-        await self.set_local_storage(self.LOCAL_STORAGE_KEY, self.pending_lotes) # Guardar restantes
+        # await self.set_local_storage(self.LOCAL_STORAGE_KEY, self.pending_lotes) # Guardar restantes
 
         result_message = f"Sincronización: {succeeded_count} éxito(s), {len(remaining_pending)} fallo(s)."
         self.sync_message = result_message
