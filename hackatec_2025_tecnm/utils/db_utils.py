@@ -25,23 +25,31 @@ def get_db_connection():
 
 def init_db():
     """Inicializa la base de datos creando las tablas si no existen."""
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Tabla simple para Maestros (asumimos uno o pocos para MVP)
+        # Tabla Maestros: Asegurar que Maps_url exista
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS maestros (
                 id_maestro TEXT PRIMARY KEY,
                 nombre TEXT NOT NULL,
                 historia TEXT,
-                whatsapp TEXT NOT NULL,
-                audio_zapoteco_url TEXT, -- Placeholder
-                foto_perfil_url TEXT  -- Placeholder
+                whatsapp TEXT NOT NULL UNIQUE, -- Hacer whatsapp único puede ayudar a encontrar/crear
+                audio_zapoteco_url TEXT,
+                foto_perfil_url TEXT,
+                Maps_url TEXT -- Columna para la URL de Maps
             )
         """)
+        # Añadir UNIQUE constraint a whatsapp si no existe (manejo de errores básico)
+        try:
+            cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_maestro_whatsapp ON maestros(whatsapp)")
+        except sqlite3.OperationalError as idx_e:
+             print(f"Advertencia al crear índice UNIQUE en whatsapp (puede que ya exista): {idx_e}")
 
-        # Tabla para Lotes de Mezcal
+
+        # Tabla Lotes (sin cambios necesarios aquí)
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS lotes (
                 id_lote TEXT PRIMARY KEY,
@@ -49,51 +57,93 @@ def init_db():
                 tipo_agave TEXT NOT NULL,
                 notas_cata TEXT,
                 descripcion_proceso TEXT,
-                fecha_produccion TEXT, -- Simplificado como texto
+                fecha_produccion TEXT,
                 video_yt_url TEXT,
-                foto_url TEXT, -- Simplificado a una URL de foto
+                foto_url TEXT,
                 url_qr_plataforma TEXT,
                 FOREIGN KEY (id_maestro) REFERENCES maestros (id_maestro)
             )
         """)
         conn.commit()
-        conn.close()
         print(f"Base de datos inicializada/verificada en: {DB_PATH}")
 
-        # --- Insertar Maestro de Ejemplo (Solo si la tabla está vacía) ---
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        # Insertar Maestro de Ejemplo si la tabla está vacía (ya no es tan necesario)
+        # Podrías comentarlo si prefieres empezar 100% desde cero con el formulario
         cursor.execute("SELECT COUNT(*) FROM maestros")
         if cursor.fetchone()[0] == 0:
-            maestro_id = str(uuid.uuid4())
+            maestro_id_ejemplo = str(uuid.uuid4())
             cursor.execute("""
-                INSERT INTO maestros (id_maestro, nombre, historia, whatsapp, audio_zapoteco_url, foto_perfil_url)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO maestros (id_maestro, nombre, historia, whatsapp, audio_zapoteco_url, foto_perfil_url, Maps_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (
-                maestro_id,
-                "Maestro Ejemplo Chichicapam",
-                "Una historia breve sobre generaciones familiares dedicadas al arte del mezcal en San Baltazar Chichicapam.",
-                "5219511234567", # Reemplaza con un número real (con código de país + 1)
-                # "https://example.com/audio/saludo.mp3", # URL de ejemplo audio
-                None, # Sin audio por ahora
-                # "https://via.placeholder.com/150/F0A84C/FFFFFF?Text=Maestro", # URL de ejemplo foto
-                None, # Sin foto por ahora
+                maestro_id_ejemplo, "Maestro Inicial (Ejemplo)", "Agregado al iniciar la BD.", "5219510000000", None, None, None
             ))
             conn.commit()
-            print(f"Maestro de ejemplo insertado con ID: {maestro_id}")
-        conn.close()
+            print(f"Maestro de ejemplo insertado con ID: {maestro_id_ejemplo}")
 
     except sqlite3.Error as e:
         print(f"Error durante la inicialización de la BD: {e}")
     except Exception as ex:
          print(f"Error inesperado en init_db: {ex}")
+    finally:
+         if conn:
+            conn.close()
+
+# ### NUEVO/MODIFICADO ### Función para encontrar o crear un maestro
+def find_or_create_maestro(nombre: str, whatsapp: str, historia: str = "", maps_url: str = "") -> Optional[str]:
+    """
+    Busca un maestro por nombre y WhatsApp. Si no existe, lo crea.
+    Retorna el ID del maestro encontrado o recién creado, o None si hay error.
+    """
+    conn = None
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Intentar encontrar por WhatsApp (más único probablemente)
+        cursor.execute("SELECT id_maestro FROM maestros WHERE whatsapp = ?", (whatsapp,))
+        result = cursor.fetchone()
+
+        if result:
+            print(f"Maestro encontrado por WhatsApp ({whatsapp}): ID {result['id_maestro']}")
+            # Opcional: Actualizar nombre/historia/maps si se proporcionaron diferentes? (Simplificado: no actualizar)
+            return result['id_maestro']
+        else:
+            # No encontrado, crear nuevo
+            new_id = str(uuid.uuid4())
+            print(f"Maestro no encontrado, creando nuevo con ID: {new_id} para {nombre} ({whatsapp})")
+            cursor.execute("""
+                INSERT INTO maestros (id_maestro, nombre, whatsapp, historia, Maps_url)
+                VALUES (?, ?, ?, ?, ?)
+            """, (new_id, nombre, whatsapp, historia, maps_url))
+            conn.commit()
+            return new_id
+
+    except sqlite3.Error as e:
+        print(f"Error SQLite en find_or_create_maestro: {e}")
+        if conn:
+            conn.rollback() # Deshacer inserción si falla el commit o algo
+        return None
+    except Exception as ex:
+        print(f"Error inesperado en find_or_create_maestro: {ex}")
+        if conn:
+            conn.rollback()
+        return None
+    finally:
+        if conn:
+            conn.close()
 
 def save_lote(lote_data: Dict[str, Any]) -> Optional[str]:
     """Guarda un nuevo lote en la BD y retorna su ID o None si falla."""
     id_lote = str(uuid.uuid4())
     url_qr = f"{PLATFORM_BASE_URL}/lotes/{id_lote}"
+    id_maestro_asociado = lote_data.get("id_maestro") # Este ID viene de find_or_create_maestro
 
-    conn = None # Inicializar conn a None
+    if not id_maestro_asociado:
+         print("Error crítico: No se proporcionó id_maestro para guardar el lote.")
+         return None
+
+    conn = None
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -105,7 +155,7 @@ def save_lote(lote_data: Dict[str, Any]) -> Optional[str]:
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             id_lote,
-            lote_data.get("id_maestro"), # El ID debe venir en lote_data
+            id_maestro_asociado, # Usar el ID obtenido
             lote_data.get("tipo_agave", "Agave Desconocido"),
             lote_data.get("notas_cata", ""),
             lote_data.get("descripcion_proceso", ""),
@@ -115,21 +165,18 @@ def save_lote(lote_data: Dict[str, Any]) -> Optional[str]:
             url_qr
         ))
         conn.commit()
-        print(f"Lote guardado con ID: {id_lote}")
+        print(f"Lote guardado con ID: {id_lote} asociado al maestro {id_maestro_asociado}")
         return id_lote
     except sqlite3.Error as e:
         print(f"Error SQLite al guardar lote: {e}")
-        if conn:
-            conn.rollback()
+        if conn: conn.rollback()
         return None
     except Exception as ex:
          print(f"Error inesperado en save_lote: {ex}")
-         if conn:
-             conn.rollback()
+         if conn: conn.rollback()
          return None
     finally:
-        if conn:
-            conn.close()
+        if conn: conn.close()
 
 
 def get_lote_and_maestro(id_lote: str) -> Optional[Dict[str, Any]]:
@@ -138,23 +185,31 @@ def get_lote_and_maestro(id_lote: str) -> Optional[Dict[str, Any]]:
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
+        # Asegurar que se selecciona Maps_url correctamente
         cursor.execute("""
             SELECT
                 l.id_lote, l.tipo_agave, l.notas_cata, l.descripcion_proceso,
                 l.fecha_produccion, l.video_yt_url, l.foto_url, l.url_qr_plataforma,
                 m.id_maestro, m.nombre AS nombre_maestro, m.historia AS historia_maestro,
-                m.whatsapp AS whatsapp_maestro, m.audio_zapoteco_url, m.foto_perfil_url
+                m.whatsapp AS whatsapp_maestro, m.audio_zapoteco_url, m.foto_perfil_url,
+                m.Maps_url -- Asegúrate que esta columna exista y se seleccione
             FROM lotes l
             JOIN maestros m ON l.id_maestro = m.id_maestro
             WHERE l.id_lote = ?
         """, (id_lote,))
         result = cursor.fetchone()
-        return dict(result) if result else None
+        # Convertir a dict, manejar None explícitamente
+        if result:
+             # print(f"Datos recuperados para lote {id_lote}: {dict(result)}") # Debug
+             return dict(result)
+        else:
+             # print(f"No se encontró resultado para lote {id_lote}") # Debug
+             return None
     except sqlite3.Error as e:
-        print(f"Error SQLite al obtener lote y maestro: {e}")
+        print(f"Error SQLite al obtener lote y maestro ({id_lote}): {e}")
         return None
     except Exception as ex:
-         print(f"Error inesperado en get_lote_and_maestro: {ex}")
+         print(f"Error inesperado en get_lote_and_maestro ({id_lote}): {ex}")
          return None
     finally:
         if conn:
@@ -166,8 +221,7 @@ def get_all_lotes_simple() -> List[Dict[str, Any]]:
      try:
          conn = get_db_connection()
          cursor = conn.cursor()
-         # Ordenar por fecha si se guarda consistentemente, o por ID
-         cursor.execute("SELECT id_lote, tipo_agave, url_qr_plataforma FROM lotes ORDER BY id_lote DESC")
+         cursor.execute("SELECT id_lote, tipo_agave, url_qr_plataforma FROM lotes ORDER BY rowid DESC") # Ordenar por inserción
          lotes = [dict(row) for row in cursor.fetchall()]
          return lotes
      except sqlite3.Error as e:

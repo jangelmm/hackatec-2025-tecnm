@@ -17,11 +17,6 @@ def display_info(label: str, value: rx.Var | Any, default_text: str = "No especi
 def lote_viewer_page() -> rx.Component:
     """Página pública que muestra la información de un lote específico."""
     return rx.container(
-        # --- Evento on_mount para Cargar Datos ---
-        # Usamos rx.call_script para asegurar que State.router.page.params esté disponible
-        # rx.script(f"console.log('Montando página para lote:', '{State.router.page.params.get('lote_id')}')"), # Debug en consola del navegador
-        # rx.box(on_mount=lambda: State.load_lote_data(State.router.page.params.get("lote_id", ""))),
-
         # --- Manejo de Carga y Errores ---
         rx.cond(
             State.is_loading_lote,
@@ -49,7 +44,7 @@ def lote_viewer_page() -> rx.Component:
                      rx.hstack(
                          # Avatar / Foto Perfil
                          rx.cond(
-                             State.current_lote_data["foto_perfil_url"],
+                             State.current_lote_data.get("foto_perfil_url"), # Usar .get() por seguridad
                              rx.avatar(fallback="M", src=State.current_lote_data["foto_perfil_url"], size="6", radius="full", high_contrast=True),
                              rx.avatar(fallback=State.current_lote_data["nombre_maestro"].to(str)[0], size="6", radius="full", high_contrast=True)
                          ),
@@ -57,17 +52,30 @@ def lote_viewer_page() -> rx.Component:
                          rx.vstack(
                              rx.heading(State.current_lote_data["nombre_maestro"], size="6", trim="both"),
                              rx.text("Maestro Mezcalero", size="2", color_scheme="gray"),
-                             rx.link(
-                                 rx.button(
-                                     rx.icon(tag="message-circle", size=18), "Contactar por WhatsApp",
-                                     size="2", margin_top="0.5em", color_scheme="green", variant="solid"
-                                 ),
-                                 href=rx.cond(
-                                     State.current_lote_data["whatsapp_maestro"],
-                                     f"https://wa.me/{State.current_lote_data['whatsapp_maestro']}",
-                                     "#"
-                                 ),
-                                 is_external=True
+                             # Link WhatsApp
+                             rx.cond( # Usar cond por si whatsapp es None/vacío
+                                 State.current_lote_data.get("whatsapp_maestro"),
+                                 rx.link(
+                                     rx.button(
+                                         rx.icon(tag="message-circle", size=18), "Contactar por WhatsApp",
+                                         size="2", margin_top="0.5em", color_scheme="green", variant="solid"
+                                     ),
+                                     href=f"https://wa.me/{State.current_lote_data['whatsapp_maestro']}",
+                                     is_external=True
+                                 )
+                             ),
+                             # ### MODIFICADO ### Link Google Maps (si existe la URL)
+                             rx.cond(
+                                State.current_lote_data.get("Maps_url"), # Usar .get() por seguridad
+                                rx.link(
+                                     rx.button(
+                                         rx.icon(tag="map_pin", size=18), "Ver Ubicación",
+                                         size="2", margin_top="0.5em", color_scheme="blue", variant="outline"
+                                     ),
+                                     href=State.current_lote_data["Maps_url"],
+                                     is_external=True
+                                 )
+                                 # , rx.fragment() # Opcional: no mostrar nada si no hay url
                              ),
                              align_items="start", spacing="1"
                          ),
@@ -75,26 +83,26 @@ def lote_viewer_page() -> rx.Component:
                      ),
                      # Historia y Audio
                      rx.cond(
-                          State.current_lote_data["historia_maestro"],
+                          State.current_lote_data.get("historia_maestro"),
                           rx.text(State.current_lote_data["historia_maestro"], margin_top="1em", size="3", color_scheme="gray")
                      ),
                      rx.cond(
-                         State.current_lote_data["audio_zapoteco_url"],
+                         State.current_lote_data.get("audio_zapoteco_url"),
                          rx.box(
                              rx.text("Escucha al maestro (Zapoteco):", size="2", margin_bottom="0.2em", color_scheme="gray"),
-                             rx.audio(url=State.current_lote_data["audio_zapoteco_url"], controls=True), # Añadir controles
+                             rx.audio(url=State.current_lote_data["audio_zapoteco_url"], controls=True),
                              margin_top="1em"
                          )
                      ),
                      width="100%", variant="surface", margin_bottom="1.5em"
                 ),
 
-                # --- Sección Lote ---
+                # --- Sección Lote (sin cambios) ---
                 rx.heading(f"Lote: {State.current_lote_data['tipo_agave']}", size="7", margin_bottom="0.5em"),
                 rx.text(f"Producción: {State.current_lote_data.get('fecha_produccion', 'No especificada')}", size="3", color_scheme="gray"),
                 rx.divider(margin_y="1em"),
 
-                # Grid para detalles / foto / video
+                # Grid para detalles / foto / video (con condicional para DeprecationWarning de video)
                 rx.grid(
                     # Columna Izquierda: Detalles Texto
                     rx.vstack(
@@ -112,21 +120,17 @@ def lote_viewer_page() -> rx.Component:
                                  width="100%", height="auto", fit="contain", max_height="350px",
                                  border_radius="var(--radius-3)", border="1px solid var(--gray-a5)"
                              ),
-                             # Placeholder si no hay foto
                              rx.center(rx.vstack(rx.icon(tag="image-off", size=32, color="var(--gray-a9)"), rx.text("Sin foto", color_scheme="gray")), border="1px dashed var(--gray-a7)", height="200px", width="100%", border_radius="var(--radius-3)")
                          ),
-                         # Video de YouTube
+                         # Video de YouTube (envuelto en cond para DeprecationWarning)
                          rx.cond(
                             State.youtube_embed_url,
                             rx.box(
                                 rx.heading("Video del Proceso", size="4", margin_top="1.5em", margin_bottom="0.5em"),
-                                rx.aspect_ratio( # Mantiene proporción 16:9
+                                rx.aspect_ratio(
                                     rx.video(
-                                        url=State.youtube_embed_url,
-                                        width="100%",
-                                        height="100%", # Ocupa todo el aspect ratio
-                                        controls=True, # Añadir controles
-                                        playing=False, # No auto-play
+                                        url=State.youtube_embed_url, # Seguro porque está en cond
+                                        width="100%", height="100%", controls=True, playing=False,
                                     ),
                                     ratio=16/9
                                 ),
@@ -135,15 +139,14 @@ def lote_viewer_page() -> rx.Component:
                         ),
                          align_items="center", width="100%", spacing="4"
                     ),
-                    columns="1fr 1fr", # Dos columnas de igual tamaño fraccional
-                    spacing="5", width="100%", align_items="start", margin_top="1.5em"
+                    columns="1fr 1fr", spacing="5", width="100%", align_items="start", margin_top="1.5em"
                 ),
 
-                # --- Información de Trazabilidad ---
+                # --- Información de Trazabilidad (sin cambios) ---
                 rx.box(
                      rx.heading("Trazabilidad", size="3", margin_bottom="0.3em", margin_top="2em"),
-                     rx.text(f"ID del Lote:", rx.code(State.current_lote_data['id_lote']), size="2"),
-                     rx.text(f"URL:", rx.code_block(State.current_lote_data['url_qr_plataforma'], can_copy=True, language="markup"), size="2"),
+                     rx.text("ID del Lote:", rx.code(State.current_lote_data['id_lote']), size="2"),
+                     rx.text("URL:", rx.code_block(State.current_lote_data['url_qr_plataforma'], can_copy=True, language="markup"), size="2"),
                      margin_top="2em", padding="1em", border="1px solid var(--gray-a5)", border_radius="var(--radius-2)", width="100%"
                 ),
 
@@ -154,6 +157,6 @@ def lote_viewer_page() -> rx.Component:
         # Footer simple o link de vuelta
         rx.center(rx.link("Volver al inicio", href="/", margin_top="3em", color_scheme="gray")),
 
-        max_width="1000px", # Ancho máximo
-        padding="1.5em" # Padding general
+        max_width="1000px",
+        padding="1.5em"
     )

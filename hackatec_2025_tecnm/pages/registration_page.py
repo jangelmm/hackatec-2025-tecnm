@@ -1,77 +1,83 @@
 # camino_del_maguey/pages/registration_page.py
 import reflex as rx
 from ..state import State
+from typing import Any # Necesario para el lambda de on_change
 
-# --- Componentes UI Reutilizables (Definidos aquí para simplicidad) ---
+# --- Componentes UI Reutilizables (sin cambios) ---
 def form_input(label: str, name: str, placeholder: str, value: rx.Var, on_change: rx.EventHandler, type: str = "text", required: bool = False) -> rx.Component:
-    """Componente para un campo de formulario."""
     return rx.form.field(
         rx.vstack(
             rx.hstack(
                 rx.form.label(label),
-                rx.cond(required, rx.text("*", color_scheme="red")), # Indicador visual
+                rx.cond(required, rx.text("*", color_scheme="red")),
                 spacing="1"
             ),
             rx.input(
-                name=name, # Importante para accesibilidad y forms
-                placeholder=placeholder,
-                value=value,
-                on_change=on_change,
-                type=type,
-                width="100%",
-                required=required
+                name=name, placeholder=placeholder, value=value,
+                on_change=on_change, type=type, width="100%", required=required
             ),
-            align_items="start",
-            width="100%"
+            align_items="start", width="100%"
         ),
-        width="100%",
-        margin_bottom="0.8em" # Espacio entre campos
+        width="100%", margin_bottom="0.8em"
    )
 
 def form_textarea(label: str, name: str, placeholder: str, value: rx.Var, on_change: rx.EventHandler, rows: int = 3) -> rx.Component:
-     """ Componente para un área de texto en el formulario. """
      return rx.form.field(
          rx.vstack(
              rx.form.label(label),
              rx.text_area(
-                 name=name,
-                 placeholder=placeholder,
-                 value=value,
-                 on_change=on_change,
-                 width="100%",
-                 rows=str(rows)
+                 name=name, placeholder=placeholder, value=value,
+                 on_change=on_change, width="100%", rows=str(rows)
              ),
-             align_items="start",
-             width="100%"
+             align_items="start", width="100%"
          ),
-         width="100%",
-         margin_bottom="0.8em" # Espacio entre campos
+         width="100%", margin_bottom="0.8em"
      )
-
 
 @rx.page(route="/registro", title="Registrar Lote | Camino del Maguey")
 def registration_page() -> rx.Component:
-    """Página para que el Maestro Mezcalero registre un nuevo lote."""
+    """Página para registrar un nuevo lote y los datos del maestro asociado."""
     return rx.container(
          rx.vstack(
-            rx.heading("Registrar Nuevo Lote de Mezcal", size="7", margin_bottom="1em"),
-            rx.cond( # Advertencia si no hay maestro ID
-                 ~State.form_lote_data["id_maestro"],
-                 rx.callout.root(
-                     rx.callout.icon(rx.icon("triangle_alert")),
-                     rx.callout.text("Error: No se pudo cargar el ID del maestro. Verifica la base de datos o recarga la página."),
-                     color_scheme="red", margin_bottom="1em"
-                 )
-            ),
+            rx.heading("Registrar Nuevo Lote y Maestro", size="7", margin_bottom="1em"),
             rx.form.root(
                  rx.vstack(
-                     # Usar los componentes reutilizables
+                     # --- Sección Maestro Mezcalero --- ### NUEVO ###
+                     rx.heading("Datos del Maestro Mezcalero", size="5", margin_bottom="0.5em", margin_top="0.5em"),
+                     form_input(
+                         "Nombre Completo*", "maestro_nombre", "Nombre y apellidos",
+                         State.form_lote_data["maestro_nombre"],
+                         lambda v: State.set_form_field("maestro_nombre", v),
+                         required=True
+                     ),
+                     form_input(
+                         "WhatsApp*", "maestro_whatsapp", "Ej: 5219511234567 (con código país)",
+                         State.form_lote_data["maestro_whatsapp"],
+                         lambda v: State.set_form_field("maestro_whatsapp", v),
+                         type="tel", required=True
+                     ),
+                     form_textarea(
+                         "Breve Historia (Opcional)", "maestro_historia", "Generaciones, comunidad, etc.",
+                         State.form_lote_data["maestro_historia"],
+                         lambda v: State.set_form_field("maestro_historia", v),
+                         rows=2
+                     ),
+                      form_input(
+                         "URL Google Maps (Opcional)", "maestro_maps_url", "Enlace de Google Maps (https://goo.gl/maps/...)",
+                         State.form_lote_data["maestro_maps_url"],
+                         lambda v: State.set_form_field("maestro_maps_url", v),
+                         type="url"
+                     ),
+                     rx.divider(margin_y="1.5em"),
+
+                     # --- Sección Datos del Lote ---
+                     rx.heading("Datos del Lote", size="5", margin_bottom="0.5em"),
                      form_input("Tipo de Agave*", "tipo_agave", "Ej: Espadín, Tobalá...", State.form_lote_data["tipo_agave"], lambda v: State.set_form_field("tipo_agave", v), required=True),
                      form_input("Fecha Aproximada de Producción", "fecha_produccion", "Ej: 2024-05, Cosecha 2023...", State.form_lote_data["fecha_produccion"], lambda v: State.set_form_field("fecha_produccion", v), type="text"),
-                     form_textarea("Notas de Cata", "notas_cata", "Aromas (humo, tierra, fruta...), sabores (agave cocido, cítrico...), sensación en boca...", State.form_lote_data["notas_cata"], lambda v: State.set_form_field("notas_cata", v)),
-                     form_textarea("Descripción del Proceso", "descripcion_proceso", "Detalles de la molienda, fermentación, destilación, maestro a cargo...", State.form_lote_data["descripcion_proceso"], lambda v: State.set_form_field("descripcion_proceso", v), rows=4),
-                     form_input("Enlace Video YouTube (Opcional)", "video_yt_url", "URL completa del video (youtube.com/watch?v=...)", State.form_lote_data["video_yt_url"], lambda v: State.set_form_field("video_yt_url", v), type="url"),
-                     form_input("Enlace Foto Principal (Opcional)", "foto_url", "URL de una imagen del lote o proceso", State.form_lote_data["foto_url"], lambda v: State.set_form_field("foto_url", v), type="url"),
+                     form_textarea("Notas de Cata", "notas_cata", "Aromas, sabores, sensación...", State.form_lote_data["notas_cata"], lambda v: State.set_form_field("notas_cata", v)),
+                     form_textarea("Descripción del Proceso", "descripcion_proceso", "Molienda, fermentación, destilación...", State.form_lote_data["descripcion_proceso"], lambda v: State.set_form_field("descripcion_proceso", v), rows=4),
+                     form_input("Enlace Video YouTube (Opcional)", "video_yt_url", "URL completa del video...", State.form_lote_data["video_yt_url"], lambda v: State.set_form_field("video_yt_url", v), type="url"),
+                     form_input("Enlace Foto Principal (Opcional)", "foto_url", "URL de una imagen...", State.form_lote_data["foto_url"], lambda v: State.set_form_field("foto_url", v), type="url"),
 
                      # --- Mensajes de Estado/Error ---
                      rx.cond(
@@ -85,56 +91,55 @@ def registration_page() -> rx.Component:
 
                      # --- Botón de Envío ---
                      rx.button(
-                         rx.cond(State.is_offline_mode, "Guardar Offline", "Guardar y Generar QR"),
+                         rx.cond(State.is_offline_mode, "Guardar Lote Offline", "Guardar Lote y Maestro"),
                          rx.icon(tag="save", margin_left="0.5em"),
                          type="submit",
                          width="100%",
                          size="3",
                          margin_top="1em",
-                         # Deshabilitar si falta el ID del maestro
-                         is_disabled=~State.form_lote_data["id_maestro"]
+                         # ### MODIFICADO ### Deshabilitar si falta info clave de maestro o lote
+                         is_disabled=~(State.form_lote_data["maestro_nombre"] & State.form_lote_data["maestro_whatsapp"] & State.form_lote_data["tipo_agave"])
                      ),
-                     spacing="0", # Ajustar espaciado si es necesario, margin_bottom en field ayuda
+                     spacing="0",
                      width="100%"
                  ),
                  on_submit=State.handle_submit_lote,
-                 reset_on_submit=False, # El handler resetea manualmente
+                 reset_on_submit=False, # El handler resetea si hay éxito
                  width="100%"
             ),
 
-             # --- Mostrar QR Generado ---
+             # --- Mostrar QR Generado --- (Con condicionales para DeprecationWarnings)
              rx.cond(
-                 State.generated_qr_code,
-                 rx.center( # Centrar el bloque del QR
+                State.generated_qr_code & State.generated_lote_url,
+                 rx.center(
                      rx.vstack(
                          rx.heading("¡QR Generado!", size="4", margin_top="1.5em", color_scheme="green"),
-                         rx.text("Escanea o haz clic para ver:", size="2"),
-                         rx.link(
-                             rx.image(
-                                 src=State.generated_qr_code,
-                                 width="180px",
-                                 height="180px",
-                                 margin_y="0.5em",
-                                 border="1px solid var(--gray-a7)",
-                                 padding="5px", # Pequeño padding interno
-                                 background_color="white", # Fondo blanco para el QR
-                             ),
-                             href=State.generated_lote_url,
-                             is_external=False # Navegación interna
+                         rx.text("Escanea o haz clic para ver el lote:", size="2"),
+                         rx.cond(
+                             State.generated_lote_url, # Check para href
+                             rx.link(
+                                 rx.image(
+                                     src=State.generated_qr_code, # Check para src
+                                     width="180px", height="180px", margin_y="0.5em",
+                                     border="1px solid var(--gray-a7)", padding="5px",
+                                     background_color="white",
+                                 ),
+                                 href=State.generated_lote_url,
+                                 is_external=False
+                             )
                          ),
-                         rx.code_block(State.generated_lote_url, can_copy=True, language="markup"),
-                         align="center",
-                         spacing="2",
-                         border="1px solid var(--gray-a7)",
-                         padding="1.5em",
-                         border_radius="var(--radius-3)",
-                         margin_top="2em",
-                         width="fit-content" # Ajustar ancho al contenido
+                         rx.cond(
+                            State.generated_lote_url, # Check para child
+                            rx.code_block(State.generated_lote_url, can_copy=True, language="markup")
+                         ),
+                         align="center", spacing="2", border="1px solid var(--gray-a7)",
+                         padding="1.5em", border_radius="var(--radius-3)", margin_top="2em",
+                         width="fit-content"
                      ),
                  )
              ),
 
-             # --- Controles Offline/Sync (Repetidos para conveniencia) ---
+             # --- Controles Offline/Sync ---
              rx.box(
                  rx.hstack(
                      rx.button(
@@ -162,10 +167,10 @@ def registration_page() -> rx.Component:
              rx.link("Volver al inicio", href="/", margin_top="2em"),
 
              width="100%",
-             max_width="700px", # Ancho máximo del formulario
+             max_width="700px",
              align="center",
              padding_bottom="3em"
          ),
-         padding_x="1em", # Padding horizontal general
-         center_content=True # Centrar el vstack principal
+         padding_x="1em",
+         center_content=True
     )
