@@ -656,12 +656,215 @@ classDiagram
     VisorWebLote ..> ContenidoMultimedia : muestra
 ```
 
+## **6. Diagrama de Interacción (Estilo Diagrama de Actividad)**
+
+Este diagrama modela el flujo principal del sistema desde la perspectiva del Maestro Mezcalero y del Comprador, destacando las interacciones clave con el sistema "Camino del Maguey", incluyendo el manejo de la funcionalidad offline.
 
 
+```plantuml
+@startuml
+' Titulo: Flujo General - Camino del Maguey (Nehza Dohba)
+title Flujo General - Camino del Maguey (Nehza Dohba)
 
+start
+partition "Maestro Mezcalero" {
+  :Abre App/Formulario Registro Lote;
+  note right: Puede estar offline
+  :Ingresa Datos Lote (Agave, Notas, etc.);
+  :Asocia Media (Link Video YT, Fotos);
+  if (¿Conectividad Disponible?) then (Sí)
+    :Guarda y Sincroniza Datos Lote;
+    note right: Ver Secuencia: Registrar Lote (Online)
+  else (No)
+    :Guarda Datos Lote Localmente (Offline);
+    note right: Ver Secuencia: Registrar Lote (Offline)
+    :Espera Conexión / Activa Sincronización Manual;
+    :Intenta Sincronizar Datos Lote;
+    note right: Ver Secuencia: Sincronizar Lote
+  endif
+}
 
+partition "Sistema (Camino del Maguey - Backend)" {
+  :Recibe Datos del Lote (vía Sincronización);
+  :Valida Datos;
+  if (¿Datos Válidos?) then (Sí)
+    :Guarda Datos en Base de Datos;
+    :Genera ID Único y URL para Lote;
+     note right: Lógica de GestorQR
+    :Asocia URL/ID al Lote en BD;
+    :Genera Código QR (imagen/data);
+  else (No)
+    :Notifica Error al Maestro;
+    stop
+  endif
+}
 
+partition "Maestro Mezcalero" {
+  :Recibe Confirmación y Código QR;
+  :Pega/Asocia QR a Botella(s) del Lote;
+}
 
+' Flujo del Comprador inicia aquí
+partition "Comprador" {
+  :Encuentra Botella con Código QR;
+  :Escanea Código QR con su Dispositivo;
+  note left: Usa App de Cámara/QR
+}
 
+partition "Sistema (Camino del Maguey - Frontend/Backend)" {
+  :Recibe Petición Web (URL del QR);
+  note right: Ver Secuencia: Visualizar Lote
+  :Extrae ID Único del Lote desde URL;
+  :Busca Datos del Lote y Maestro asociado en BD;
+  :Recupera Contenido Multimedia asociado;
+  :Prepara Página de Visualización (HTML);
+  :Sirve Página Web al Navegador del Comprador;
+}
 
+partition "Comprador" {
+  :Visualiza Página con Información del Lote;
+  note right: Detalles del lote, historia del maestro,\nvideo YT embebido, audio Zapoteco (si existe).
+  if (¿Interesado en Comprar/Contactar?) then (Sí)
+    :Hace Clic en Botón/Enlace Contacto WhatsApp;
+    note right: Ver Secuencia: Iniciar Contacto WhatsApp
+    :Sistema Operativo abre App WhatsApp;
+    :Inicia Conversación Directa con Maestro;
+  else (No)
+    :Cierra Página / Continúa Navegando;
+  endif
+}
 
+stop
+
+@enduml
+```
+
+**Características Clave del Diagrama de Interacción:**
+
+1. **Flujo por Actor/Sistema**: Usa particiones (`partition`) para separar las acciones del `Maestro Mezcalero`, el `Sistema` (backend/frontend) y el `Comprador`.
+2. **Manejo Offline**: Explícitamente modela la bifurcación basada en la conectividad para el registro del lote, incluyendo el guardado local y la sincronización posterior.
+3. **Puntos de Integración**: Muestra cómo las acciones de un actor desencadenan procesos en el sistema (ej. Sincronización -> Generación QR; Escaneo QR -> Visualización Web).
+4. **Decisiones Clave**: Usa condicionales (`if/then/else`) para representar decisiones importantes (conectividad, validación de datos, decisión de contacto del comprador).
+5. **Referencias a Secuencias**: Incluye notas (`note`) que indican qué Diagrama de Secuencia detalla una actividad específica.
+
+---
+
+## **7. Diagramas de Secuencia Clave (Mermaid)**
+
+Estos diagramas detallan las interacciones específicas referenciadas en el diagrama de actividad anterior.
+
+### **7.1. Registrar Lote (Énfasis en Guardado Offline)**
+
+- **Participantes**: `Maestro` (Actor), `VistaRegistro` (UI/PWA), `ControlLoteLocal` (Lógica Frontend/Offline), `LocalStorage`, `ControlLoteBackend` (API), `BaseDeDatos`.
+
+Code snippet
+
+```mermaid
+sequenceDiagram
+    participant M as Maestro Mezcalero
+    participant VR as VistaRegistro (UI/PWA)
+    participant CLL as ControlLoteLocal (Frontend)
+    participant LS as LocalStorage (Navegador)
+    participant CLB as ControlLoteBackend (API)
+    participant BD as BaseDeDatos
+
+    M->>VR: Abre formulario de registro de lote
+    M->>VR: Ingresa datos (agave, notas, link YT, fotos)
+    VR->>CLL: enviarDatosLote(datosLote)
+    CLL->>CLL: detectarConectividad()
+    alt Sin Conexión
+        CLL->>LS: guardarLotePendiente(datosLote)
+        LS-->>CLL: confirmaciónLocal
+        CLL-->>VR: mostrarMensaje("Lote guardado localmente. Sincronizar cuando haya conexión.")
+        VR-->>M: Muestra mensaje de guardado offline
+        note right of CLL: HU-L1: Guardado Offline Crítico
+    else Con Conexión (o Sincronización Posterior)
+        CLL->>CLB: POST /api/lotes (datosLote)
+        activate CLB
+        CLB->>BD: Validar y Guardar Lote(datosLote)
+        activate BD
+        BD-->>CLB: idLoteNuevo
+        deactivate BD
+        CLB->>CLB: generarUrlYQR(idLoteNuevo)
+        CLB-->>CLL: { success: true, idLote: idLoteNuevo, qrData: ..., urlLote: ... }
+        deactivate CLB
+        CLL->>LS: eliminarLotePendiente(datosLote.idTemporal) // Si venía de offline
+        CLL-->>VR: mostrarConfirmacionYQR(idLoteNuevo, qrData, urlLote)
+        VR-->>M: Muestra confirmación y QR
+        note left of CLB: Generación ID/URL y QR en Backend
+    end
+```
+
+- **Explicación**:
+    - El `ControlLoteLocal` (en el frontend) primero verifica la conectividad.
+    - **Offline**: Guarda los datos directamente en `LocalStorage` y notifica al usuario.
+    - **Online/Sincronización**: Envía los datos al `ControlLoteBackend` (API). El backend valida, guarda en `BaseDeDatos`, genera el ID/URL/QR y devuelve la confirmación y el QR al frontend. Si el lote estaba pendiente (guardado offline), se elimina del `LocalStorage`.
+
+---
+
+### **7.2. Visualizar Lote (Tras Escanear QR)**
+
+- **Participantes**: `Comprador` (Actor), `Navegador`, `ServidorWeb` (Reflex - Frontend/Backend Logic), `BaseDeDatos`.
+
+```mermaid
+sequenceDiagram
+    participant C as Comprador
+    participant Nav as NavegadorWeb
+    participant SW as ServidorWeb (Reflex)
+    participant BD as BaseDeDatos
+
+    C->>Nav: Escanea QR (resulta en URL: servidor.com/lote/{idLote})
+    Nav->>SW: GET /lote/{idLote}
+    activate SW
+    SW->>SW: Extraer idLote de la URL
+    SW->>BD: buscarLoteCompleto(idLote)
+    activate BD
+    BD-->>SW: Datos(LoteMezcal, MaestroMezcalero, ContenidoMultimedia[])
+    deactivate BD
+    SW->>SW: Renderizar plantilla HTML con datos
+    SW-->>Nav: HTTP 200 OK (Contenido HTML)
+    deactivate SW
+    Nav->>C: Muestra página web con detalles del lote y maestro
+
+    note right of SW: Recupera toda la info necesaria: Lote, Maestro, Media (YT, fotos, audio Zapoteco?)
+
+```
+
+- **Explicación**:
+    - El escaneo del QR dirige el `Navegador` a una URL específica del lote.
+    - El `ServidorWeb` (manejado por Reflex) recibe la petición.
+    - Consulta la `BaseDeDatos` para obtener toda la información relevante (datos del lote, del maestro asociado, y cualquier contenido multimedia como links de video, fotos, o el link al audio Zapoteco).
+    - Renderiza la página HTML con esta información y la devuelve al navegador del comprador.
+
+---
+
+### **7.3. Iniciar Contacto WhatsApp**
+
+- **Participantes**: `Comprador` (Actor), `NavegadorWeb`, `SistemaOperativo` (Dispositivo del Comprador), `AppWhatsApp`.
+
+Code snippet
+
+```mermaid
+sequenceDiagram
+    participant C as Comprador
+    participant Nav as NavegadorWeb
+    participant SO as SistemaOperativo
+    participant WA as AppWhatsApp
+
+    C->>Nav: Hace clic en enlace/botón "Contactar por WhatsApp" (wa.me/...)
+    Nav->>SO: Solicitar abrir URL externa (wa.me/...)
+    activate SO
+    SO->>WA: Iniciar App con URL (número y/o mensaje predefinido)
+    activate WA
+    WA->>C: Muestra interfaz de chat con el Maestro Mezcalero
+    deactivate WA
+    deactivate SO
+
+    note over Nav, WA: El navegador delega la apertura del enlace wa.me al Sistema Operativo, que a su vez lanza WhatsApp.
+
+```
+
+- **Explicación**:
+    - Una acción simple pero clave: el clic en el enlace `wa.me/...` en el navegador.
+    - El navegador le pide al `SistemaOperativo` que maneje ese tipo de enlace.
+    - El `SistemaOperativo` abre la `AppWhatsApp` (si está instalada) con la información del enlace (el número de teléfono del maestro).
