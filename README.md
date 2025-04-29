@@ -357,3 +357,229 @@ POLYGON_RPC_URL=https://polygon-rpc.com
 ```
 https://github.com/camino_del_maguey/reflex-mvp
 ``` 
+
+# Fase 2 - Diseño: Raíces Conectadas / Origen Chichicapam
+
+## **1. Agrupación de Historias de Usuario por Características (Épicas)**
+
+Organizamos las funcionalidades clave identificadas en la Fase 1 y la nota adicional en las siguientes Épicas:
+
+* **Épica 1: Gestión de Identidad del Maestro Mezcalero**
+    * HU-M1: Como Maestro Mezcalero, quiero registrar y actualizar mi perfil (nombre, historia, palenque, foto, *audio Zapoteco*, datos de contacto).
+    * HU-M2: Como Administrador (del proyecto), quiero validar la identidad y pertenencia a la comunidad de los Maestros Mezcaleros registrados *(Funcionalidad deseable post-MVP)*.
+* **Épica 2: Gestión y Autenticación de Lotes de Mezcal**
+    * HU-L1: Como Maestro Mezcalero, quiero registrar un nuevo lote de mezcal (tipo agave, notas, fecha/año, fotos, enlace a video de YouTube).
+    * HU-L2: Como Maestro Mezcalero, quiero generar un código QR único para cada lote registrado que enlace a su información detallada.
+    * HU-L3: Como Sistema, quiero asegurar que cada lote tenga un identificador único y esté asociado a un Maestro Mezcalero validado.
+* **Épica 3: Experiencia del Comprador y Visualización**
+    * HU-C1: Como Comprador, quiero escanear el código QR de una botella de mezcal.
+    * HU-C2: Como Comprador, quiero ver una página web con la información detallada del lote (proceso, agave, notas), fotos, video del proceso/maestro (YouTube), y la historia del Maestro Mezcalero (incluyendo su saludo en Zapoteco).
+    * HU-C3: Como Comprador, quiero tener la certeza de que la información es auténtica y proviene directamente del productor.
+* **Épica 4: Conexión y Comercio Directo**
+    * HU-C4: Como Comprador, después de ver la información del lote, quiero poder contactar fácilmente al Maestro Mezcalero (preferentemente vía WhatsApp) para preguntar o iniciar la compra.
+    * HU-M3: Como Maestro Mezcalero, quiero recibir notificaciones o mensajes directos (vía WhatsApp) de compradores interesados.
+
+Esta agrupación define los bloques funcionales principales de la plataforma.
+
+---
+
+## **2. Identificación y Selección de Abstracciones Clave**
+
+Siguiendo un proceso similar al descrito en la plantilla (basado en responsabilidades, información retenida, servicios necesarios, etc.), identificamos las siguientes abstracciones (clases) esenciales para "Raíces Conectadas":
+
+* **`MaestroMezcalero`**: Representa al productor de mezcal de la comunidad. Almacena su perfil, historia, datos de contacto y gestiona sus lotes. (Derivada de HU-M1, HU-L1, HU-C2, HU-C4).
+* **`LoteMezcal`**: Representa un lote específico de producción de mezcal. Contiene detalles del producto, el enlace al QR/ID único y se asocia a su Maestro. (Derivada de HU-L1, HU-L2, HU-C2).
+* **`ContenidoMultimedia`**: Representa los elementos visuales o auditivos asociados (fotos del lote/proceso, enlace a video de YouTube, enlace a audio Zapoteco). (Derivada de HU-L1, HU-C2).
+* **`VisorWebLote`**: No es una clase de *datos*, sino que representa la lógica o componente responsable de *presentar* la información de un LoteMezcal y su Maestro al Comprador tras escanear el QR. (Derivada de HU-C2, HU-C4).
+* **`GestorQR`**: Representa la funcionalidad para generar y asociar identificadores únicos (que irán en el QR) a cada `LoteMezcal`. (Derivada de HU-L2).
+
+Se descartaron abstracciones más complejas (como `Blockchain/NFT`, `PasarelaPago`, `Logistica`) para el **MVP del Hackatec**, enfocándose en el flujo central de autenticación, visualización y contacto directo vía WhatsApp.
+
+---
+
+## **3. Diseño de Fichas CRC (Clase-Responsabilidad-Colaborador)**
+
+#### Clase: MaestroMezcalero
+
+| **Clase: MaestroMezcalero**       |                                                         |
+| :-------------------------------- | :------------------------------------------------------ |
+| **Responsabilidades**             | **Colaboradores**                                       |
+| Gestionar datos del perfil        | -                                                       |
+| Gestionar información de contacto | -                                                       |
+| Añadir/Gestionar Lotes de Mezcal  | `LoteMezcal`                                            |
+| Asociar contenido multimedia      | `ContenidoMultimedia` (ej. foto perfil, audio Zapoteco) |
+| *Ser validado*                    | `Administrador` (Actor Externo/Rol)                     |
+
+* **Descripción**: Modela al productor individual de mezcal dentro de la comunidad. Contiene su historia, datos y es el punto de contacto.
+* **Atributos Clave**: `idMaestro`, `nombre`, `historiaPalenque`, `contactoWhatsApp`, `contactoEmail`, `fotoPerfilURL`, `audioZapotecoURL`, `esValidado`.
+
+#### Clase: LoteMezcal
+
+| **Clase: LoteMezcal**                |                       |
+| :----------------------------------- | :-------------------- |
+| **Responsabilidades**                | **Colaboradores**     |
+| Almacenar datos específicos del lote | -                     |
+| Asociarse a un MaestroMezcalero      | `MaestroMezcalero`    |
+| Asociar contenido multimedia         | `ContenidoMultimedia` |
+| Gestionar identificador único (QR)   | `GestorQR`            |
+|                                      |                       |
+
+* **Descripción**: Representa una producción específica (batch) de mezcal con sus características únicas. Es el objeto principal de la trazabilidad.
+* **Atributos Clave**: `idLote` (ID único ligado al QR), `idMaestro` (FK), `tipoAgave`, `fechaProduccion`, `notasCata`, `volumen`, `gradoAlcoholico`, `estado` (Disponible/Agotado).
+
+#### Clase: ContenidoMultimedia
+
+| **Clase: ContenidoMultimedia**    |                                  |
+| :-------------------------------- | :------------------------------- |
+| **Responsabilidades**             | **Colaboradores**                |
+| Almacenar URL/referencia al medio | -                                |
+| Indicar tipo de medio             | -                                |
+| Asociarse a Lote o Maestro        | `LoteMezcal`, `MaestroMezcalero` |
+
+* **Descripción**: Abstracción para manejar diferentes tipos de medios asociados (fotos, videos, audios). Simplifica la gestión.
+* **Atributos Clave**: `idMedia`, `idAsociado` (Lote o Maestro), `tipoMedio` (YOUTUBE\_URL, IMAGE\_URL, AUDIO\_URL), `urlMedia`.
+
+#### Clase: GestorQR
+
+| **Clase: GestorQR**                 |                      |
+| :---------------------------------- | :------------------- |
+| **Responsabilidades**               | **Colaboradores**    |
+| Generar identificador único de Lote | -                    |
+| Crear URL de la plataforma para QR  | `LoteMezcal`         |
+| *(Opcional)* Generar imagen QR      | *(Librería externa)* |
+
+* **Descripción**: Encapsula la lógica para crear los identificadores únicos que van dentro del QR y las URLs correspondientes que apuntan al `VisorWebLote`.
+* **Atributos Clave**: N/A (Principalmente métodos).
+
+*(Nota: `VisorWebLote` y `ContactoDirecto` son más bien funcionalidades o componentes de la interfaz/lógica de presentación, no clases de entidad primarias en este modelo simplificado).*
+
+---
+
+## **4. Diseño Detallado de Clases (Atributos y Métodos Principales)**
+
+#### Clase: `MaestroMezcalero`
+
+* **Atributos**:
+    * `-idMaestro: string` (PK, puede ser UUID o ID simple)
+    * `-nombreCompleto: string`
+    * `-historiaPalenque: string`
+    * `-fotoPerfilURL: string`
+    * `-audioZapotecoURL: string` (Enlace al archivo de audio)
+    * `-contactoWhatsApp: string` (Número de teléfono)
+    * `-contactoEmail: string` (Opcional)
+    * `-esValidado: boolean`
+* **Métodos**:
+    * `+actualizarPerfil(datos: dict): void`
+    * `+obtenerPerfil(): dict`
+    * `+definirContactoPrincipal(tipo: string, valor: string): void`
+    * `+listarLotesPropios(): List<LoteMezcal>`
+
+#### Clase: `LoteMezcal`
+
+* **Atributos**:
+    * `-idLote: string` (PK, ID único generado por `GestorQR`)
+    * `-idMaestro: string` (FK a `MaestroMezcalero`)
+    * `-tipoAgave: string`
+    * `-fechaProduccion: string` (o Date)
+    * `-notasCataMaestro: string`
+    * `-descripcionProceso: string`
+    * `-volumenLote: float` (Opcional)
+    * `-gradoAlcoholico: float` (Opcional)
+    * `-estado: string` ("Disponible", "Agotado")
+    * `-urlQRPlataforma: string` (URL que se pone en el QR, ej: `plataforma.com/lote/idLote`)
+* **Métodos**:
+    * `+guardar(offline: boolean): boolean` *(Indica si debe intentar guardar local o sincronizar)*
+    * `+obtenerDatosCompletos(): dict` (Incluye datos del maestro y multimedia asociados)
+    * `+asociarMedia(media: ContenidoMultimedia): void`
+    * `+definirURLQR(url: string): void`
+    * `+actualizarEstado(nuevoEstado: string): void`
+
+#### Clase: `ContenidoMultimedia`
+
+* **Atributos**:
+    * `-idMedia: string` (PK)
+    * `-idEntidadAsociada: string` (Puede ser `idLote` o `idMaestro`)
+    * `-tipoEntidad: string` ("LoteMezcal", "MaestroMezcalero")
+    * `-tipoMedio: string` ("YOUTUBE_URL", "IMAGE_URL", "AUDIO_URL")
+    * `-urlMedia: string` (Enlace al recurso)
+    * `-descripcionAlt: string` (Opcional)
+* **Métodos**:
+    * `+obtenerUrl(): string`
+    * `+validarUrl(): boolean`
+
+#### Clase: `GestorQR`
+
+* **Métodos**:
+    * `+generarIdUnicoLote(): string`
+    * `+construirUrlPlataforma(idLote: string): string`
+    * `+(Opcional) generarImagenQR(url: string): bytes`
+
+---
+
+## **5. Diagrama de Clases UML Simplificado (Mermaid)**
+
+```mermaid
+classDiagram
+    class MaestroMezcalero {
+        -idMaestro: string
+        -nombreCompleto: string
+        -historiaPalenque: string
+        -fotoPerfilURL: string
+        -audioZapotecoURL: string
+        -contactoWhatsApp: string
+        -esValidado: boolean
+        +actualizarPerfil(datos: dict): void
+        +obtenerPerfil(): dict
+        +listarLotesPropios(): List~LoteMezcal~
+    }
+    class LoteMezcal {
+        -idLote: string
+        -idMaestro: string
+        -tipoAgave: string
+        -fechaProduccion: string
+        -notasCataMaestro: string
+        -descripcionProceso: string
+        -estado: string
+        -urlQRPlataforma: string
+        +guardar(offline: boolean): boolean
+        +obtenerDatosCompletos(): dict
+        +asociarMedia(media: ContenidoMultimedia): void
+        +actualizarEstado(nuevoEstado: string): void
+    }
+    class ContenidoMultimedia {
+        -idMedia: string
+        -idEntidadAsociada: string
+        -tipoEntidad: string
+        -tipoMedio: string
+        -urlMedia: string
+        +obtenerUrl(): string
+    }
+    class GestorQR {
+        +generarIdUnicoLote(): string
+        +construirUrlPlataforma(idLote: string): string
+    }
+    class VisorWebLote {
+        %% Representa la lógica de presentación %%
+        +mostrarPaginaLote(idLote: string): HTMLResponse
+        +generarEnlaceWhatsApp(maestro: MaestroMezcalero): string
+    }
+
+    MaestroMezcalero "1" -- "*" LoteMezcal : produce/gestiona
+    LoteMezcal "1" -- "1" MaestroMezcalero : perteneceA
+    LoteMezcal "1" -- "*" ContenidoMultimedia : tiene
+    MaestroMezcalero "1" -- "*" ContenidoMultimedia : tienePerfilMedia
+    GestorQR ..> LoteMezcal : generaID/URLPara
+    VisorWebLote ..> LoteMezcal : muestraDatosDe
+    VisorWebLote ..> MaestroMezcalero : muestraDatosDe
+    VisorWebLote ..> ContenidoMultimedia : muestra
+```
+
+
+
+
+
+
+
+
+
+
