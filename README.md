@@ -351,7 +351,7 @@ POLYGON_RPC_URL=https://polygon-rpc.com
 ## **7. Equipo Técnico**  
 | Nombre | Rol        | Tecnologías Clave  |     |
 | ------ | ---------- | ------------------ | --- |
-| Ángek  | Backend    | Python/Reflex/APIs |     |
+| Ángel  | Backend    | Python/Reflex/APIs |     |
 | Eric   | Frontend   | Reflex/UI Design   |     |
 | Manuel | Blockchain | Solidity/Polygon   |     |
 
