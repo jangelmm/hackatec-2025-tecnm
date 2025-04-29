@@ -9,7 +9,7 @@ from .utils.db_utils import (
     save_lote,
     get_lote_and_maestro,
     get_all_lotes_simple,
-    find_or_create_maestro, # ### MODIFICADO ### Usar nueva función
+    find_or_create_maestro, # Usar nueva función
     PLATFORM_BASE_URL,
     init_db
 )
@@ -20,13 +20,11 @@ class State(rx.State):
     """Estado principal de la aplicación."""
 
     # --- Estado del Formulario de Registro ---
-    # ### MODIFICADO ### Añadir campos de maestro al formulario
     form_lote_data: Dict[str, Any] = {
-        "maestro_nombre": "", # Nuevo campo
-        "maestro_whatsapp": "", # Nuevo campo
-        "maestro_historia": "", # Nuevo campo (opcional)
-        "maestro_maps_url": "", # Nuevo campo (opcional)
-        # "id_maestro": "", # Ya no se guarda aquí directamente
+        "maestro_nombre": "",
+        "maestro_whatsapp": "",
+        "maestro_historia": "",
+        "maestro_maps_url": "",
         "tipo_agave": "",
         "notas_cata": "",
         "descripcion_proceso": "",
@@ -75,21 +73,17 @@ class State(rx.State):
         """Llamado al montar la página inicial para preparar la BD."""
         print("Inicializando base de datos...")
         init_db()
-        # Ya no necesitamos cargar maestro por defecto aquí
-        # Carga inicial de lotes para la lista (opcional, se carga en la página de lista)
-        # self.load_all_lotes()
-
         # return State.load_pending_from_storage # <-- Comentado temporalmente
 
     async def load_pending_from_storage(self):
         """Carga los lotes pendientes desde LocalStorage."""
-        # NECESITA REFACTORIZACIÓN PARA USAR rx.LocalStorage
         print(f"Intentando cargar pendientes - FUNCIONALIDAD DESACTIVADA")
         self.pending_lotes = []
 
     def set_form_field(self, field: str, value: Any):
         """Actualiza un campo del diccionario del formulario."""
         self.form_lote_data[field] = value
+        # Limpiar QR/URL y mensajes al empezar a editar de nuevo
         self.generated_qr_code = None
         self.generated_lote_url = None
         self.form_error_message = None
@@ -98,18 +92,12 @@ class State(rx.State):
     def _validate_form(self) -> bool:
          """ Valida los campos obligatorios del formulario. """
          self.form_error_message = None
-         # ### MODIFICADO ### Validar campos de Maestro y Lote
          if not self.form_lote_data.get("maestro_nombre", "").strip():
               self.form_error_message = "El nombre del Maestro Mezcalero es obligatorio."
               return False
          if not self.form_lote_data.get("maestro_whatsapp", "").strip():
               self.form_error_message = "El WhatsApp del Maestro Mezcalero es obligatorio."
               return False
-         # Validar formato WhatsApp (simple)? Podría ser más complejo
-         # telefono = self.form_lote_data["maestro_whatsapp"].replace("+", "").replace(" ", "")
-         # if not telefono.isdigit() or len(telefono) < 10:
-         #     self.form_error_message = "El formato del WhatsApp no parece válido."
-         #     return False
          if not self.form_lote_data.get("tipo_agave", "").strip():
              self.form_error_message = "El tipo de agave es obligatorio."
              return False
@@ -117,21 +105,20 @@ class State(rx.State):
 
     async def handle_submit_lote(self):
         """Maneja el envío del formulario de lote."""
-        self.generated_qr_code = None
-        self.generated_lote_url = None
+        # No limpiar QR/URL aquí, hacerlo en set_form_field
+        # self.generated_qr_code = None
+        # self.generated_lote_url = None
         self.form_error_message = None
         self.sync_message = None
 
         if not self._validate_form():
              return
 
-        # ### NUEVO ### Encontrar o crear el maestro ANTES de guardar el lote
         maestro_nombre = self.form_lote_data.get("maestro_nombre")
         maestro_whatsapp = self.form_lote_data.get("maestro_whatsapp")
         maestro_historia = self.form_lote_data.get("maestro_historia", "")
         maestro_maps_url = self.form_lote_data.get("maestro_maps_url", "")
 
-        # Llamada síncrona a la función de BD (Reflex lo maneja en background thread)
         maestro_id = find_or_create_maestro(
             nombre=maestro_nombre,
             whatsapp=maestro_whatsapp,
@@ -141,48 +128,44 @@ class State(rx.State):
 
         if not maestro_id:
              self.form_error_message = "Error al buscar o crear el registro del Maestro Mezcalero."
-             print("Error: find_or_create_maestro devolvió None.")
              return
 
-        # Preparar datos del lote incluyendo el ID del maestro obtenido
         lote_data_to_save = self.form_lote_data.copy()
-        lote_data_to_save["id_maestro"] = maestro_id # <-- Asociar ID encontrado/creado
-        lote_data_to_save["temp_id"] = str(uuid.uuid4()) # ID temporal para offline
+        lote_data_to_save["id_maestro"] = maestro_id
+        lote_data_to_save["temp_id"] = str(uuid.uuid4())
 
-        # --- Lógica Offline/Online ---
         if self.is_offline_mode:
             print("Modo Offline: Guardando lote localmente... (FUNCIONALIDAD DESACTIVADA)")
             self.pending_lotes.append(lote_data_to_save)
-            # await self.set_local_storage(...) # <-- Comentado
             self.sync_message = f"Lote '{lote_data_to_save['tipo_agave']}' guardado offline (simulado)."
-            self._reset_form()
+            self._reset_form() # Resetear formulario después de guardar offline
         else:
             print(f"Modo Online: Guardando lote para maestro ID: {maestro_id}...")
-            id_lote_nuevo = save_lote(lote_data_to_save) # save_lote ahora usa el id_maestro pasado
+            id_lote_nuevo = save_lote(lote_data_to_save)
             if id_lote_nuevo:
                 print(f"Lote guardado en BD con ID: {id_lote_nuevo}")
                 lote_url = f"{PLATFORM_BASE_URL}/lotes/{id_lote_nuevo}"
-                self.generated_lote_url = lote_url
-                self.generated_qr_code = generate_qr_code_base64(lote_url)
+                self.generated_lote_url = lote_url # <-- Se asigna aquí
+                self.generated_qr_code = generate_qr_code_base64(lote_url) # <-- Se asigna aquí
                 if not self.generated_qr_code:
                      self.form_error_message = "Lote guardado, pero hubo un error al generar QR."
+                     self._reset_form() # Resetear aunque falle QR? Decisión de UX
                 else:
                      self.sync_message = f"Lote '{lote_data_to_save['tipo_agave']}' para '{maestro_nombre}' guardado y QR generado."
-                self._reset_form()
-                self.load_all_lotes() # Actualizar lista general
+                     self._reset_form() # <-- Resetear formulario DESPUÉS de generar QR/URL
+                self.load_all_lotes()
             else:
                 self.form_error_message = "Error: No se pudo guardar el lote en la base de datos."
+                # No resetear formulario si falló el guardado
 
     async def sync_pending_lotes(self):
         """Intenta sincronizar los lotes guardados localmente."""
-        # NECESITA REFACTORIZACIÓN PARA USAR rx.LocalStorage
         print("Sincronización pendiente - FUNCIONALIDAD DESACTIVADA")
         self.sync_message = "Funcionalidad de sincronización no implementada."
 
-
+    # ### MODIFICADO ### _reset_form ya NO limpia QR ni URL generados
     def _reset_form(self):
-        """ Resetea el diccionario del formulario a valores iniciales. """
-        # ### MODIFICADO ### Limpiar todos los campos
+        """ Resetea SOLO los campos de entrada del formulario. """
         self.form_lote_data = {
             "maestro_nombre": "",
             "maestro_whatsapp": "",
@@ -195,11 +178,7 @@ class State(rx.State):
             "video_yt_url": "",
             "foto_url": ""
         }
-        # Limpiar también QR y mensajes
-        self.generated_qr_code = None
-        self.generated_lote_url = None
-        self.form_error_message = None
-        # self.sync_message = None # Quizás dejar el último mensaje de sync
+        self.form_error_message = None # Limpiar error de formulario sí tiene sentido
 
     def toggle_offline_mode(self):
         """Cambia el estado de simulación offline."""
@@ -208,25 +187,19 @@ class State(rx.State):
         self.sync_message = f"Modo Offline {mode}."
         print(f"Modo Offline cambiado a: {self.is_offline_mode}")
 
-
     def load_lote_data(self, lote_id: Optional[str]):
         """Carga los datos de un lote específico para visualización."""
         self.current_lote_data = None
         self.viewer_error_message = None
         self.is_loading_lote = False
-
         if not lote_id:
             self.viewer_error_message = "ID de lote inválido o no proporcionado en la URL."
-            # print("Error: ID de lote vacío en load_lote_data") # Limpiar consola
             return
-
         self.is_loading_lote = True
         print(f"Visor: Cargando datos para lote ID: {lote_id}")
-
         try:
-             data = get_lote_and_maestro(lote_id) # Ya incluye Maps_url si existe
+             data = get_lote_and_maestro(lote_id)
              self.is_loading_lote = False
-
              if data:
                  self.current_lote_data = data
                  print(f"Visor: Datos cargados para {lote_id}")
@@ -237,7 +210,6 @@ class State(rx.State):
              print(f"Visor: Excepción al cargar lote {lote_id}: {e}")
              self.viewer_error_message = "Ocurrió un error al cargar los datos del lote."
              self.is_loading_lote = False
-
 
     def load_all_lotes(self):
         """Carga la lista simple de todos los lotes."""

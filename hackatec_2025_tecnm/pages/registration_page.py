@@ -42,7 +42,7 @@ def registration_page() -> rx.Component:
             rx.heading("Registrar Nuevo Lote y Maestro", size="7", margin_bottom="1em"),
             rx.form.root(
                  rx.vstack(
-                     # --- Sección Maestro Mezcalero --- ### NUEVO ###
+                     # --- Sección Maestro Mezcalero ---
                      rx.heading("Datos del Maestro Mezcalero", size="5", margin_bottom="0.5em", margin_top="0.5em"),
                      form_input(
                          "Nombre Completo*", "maestro_nombre", "Nombre y apellidos",
@@ -97,29 +97,29 @@ def registration_page() -> rx.Component:
                          width="100%",
                          size="3",
                          margin_top="1em",
-                         # ### MODIFICADO ### Deshabilitar si falta info clave de maestro o lote
                          is_disabled=~(State.form_lote_data["maestro_nombre"] & State.form_lote_data["maestro_whatsapp"] & State.form_lote_data["tipo_agave"])
                      ),
                      spacing="0",
                      width="100%"
                  ),
                  on_submit=State.handle_submit_lote,
-                 reset_on_submit=False, # El handler resetea si hay éxito
+                 reset_on_submit=False,
                  width="100%"
             ),
 
-             # --- Mostrar QR Generado --- (Con condicionales para DeprecationWarnings)
+             # --- Mostrar QR Generado --- ### MODIFICADO ### Añadidos rx.cond
              rx.cond(
-                State.generated_qr_code & State.generated_lote_url,
+                State.generated_qr_code & State.generated_lote_url, # Condición base
                  rx.center(
                      rx.vstack(
                          rx.heading("¡QR Generado!", size="4", margin_top="1.5em", color_scheme="green"),
                          rx.text("Escanea o haz clic para ver el lote:", size="2"),
+                         # Envolver Link en Cond para DeprecationWarning
                          rx.cond(
                              State.generated_lote_url, # Check para href
                              rx.link(
                                  rx.image(
-                                     src=State.generated_qr_code, # Check para src
+                                     src=State.generated_qr_code, # Check para src (asumimos que existe si URL existe)
                                      width="180px", height="180px", margin_y="0.5em",
                                      border="1px solid var(--gray-a7)", padding="5px",
                                      background_color="white",
@@ -128,6 +128,7 @@ def registration_page() -> rx.Component:
                                  is_external=False
                              )
                          ),
+                         # Envolver CodeBlock en Cond para DeprecationWarning
                          rx.cond(
                             State.generated_lote_url, # Check para child
                             rx.code_block(State.generated_lote_url, can_copy=True, language="markup")
@@ -139,7 +140,7 @@ def registration_page() -> rx.Component:
                  )
              ),
 
-             # --- Controles Offline/Sync ---
+             # --- Controles Offline/Sync (Sin cambios) ---
              rx.box(
                  rx.hstack(
                      rx.button(
