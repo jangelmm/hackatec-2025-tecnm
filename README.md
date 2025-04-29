@@ -1,3 +1,6 @@
+Reto y Temática:
+# "Innovación con Raíces: Nuevas Formas de Comercializar la Artesanía Oaxaqueña sin Perder su Esencia"
+
 # Descripción
 
 ## Contexto del Reto
