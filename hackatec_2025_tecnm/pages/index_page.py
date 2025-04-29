@@ -7,7 +7,7 @@ def index() -> rx.Component:
     """Página de inicio y panel de control simple."""
     return rx.container(
         rx.vstack(
-            rx.image(src="/logo_placeholder.png", width="100px", height="auto", margin_bottom="1em"), # Añadir un logo si tienes
+            rx.image(src="assets/logo_placeholder.png", width="100px", height="auto", margin_bottom="1em"), # Añadir un logo si tienes
             rx.heading("Camino del Maguey", size="8"), # Nehza Dohba?
             rx.text("Plataforma de Trazabilidad y Contacto Directo para Mezcal Artesanal", size="5", color_scheme="gray"),
             rx.divider(margin_y="1.5em"),
