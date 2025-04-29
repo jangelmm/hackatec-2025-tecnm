@@ -20,6 +20,7 @@
 │   ├── hackatec_2025_tecnm.py
 │   └── state.py
 ├── README.md
+├── camino_del_maguey.db
 ├── generate_markdown.py
 ├── project_overview.md
 ├── requirements.txt
@@ -193,7 +194,7 @@ from .utils.db_utils import (
     save_lote,
     get_lote_and_maestro,
     get_all_lotes_simple,
-    DEFAULT_MAESTRO_ID,
+    get_default_maestro_id,
     PLATFORM_BASE_URL,
     init_db # Importar función de inicialización
 )
@@ -208,7 +209,7 @@ class State(rx.State):
 
     # --- Estado del Formulario de Registro ---
     form_lote_data: Dict[str, Any] = {
-        "id_maestro": DEFAULT_MAESTRO_ID or "",
+        "id_maestro": "",
         "tipo_agave": "",
         "notas_cata": "",
         "descripcion_proceso": "",
@@ -269,17 +270,23 @@ class State(rx.State):
     # --- Event Handlers ---
 
     # Inicialización
+    # state.py - dentro de la clase State
     def initialize_app(self):
         """Llamado al montar la página inicial para preparar la BD y cargar pendientes."""
         print("Inicializando base de datos...")
         init_db() # Asegura que la BD y tablas existan
-        # Actualizar ID maestro por si se creó en init_db
-        global DEFAULT_MAESTRO_ID
-        DEFAULT_MAESTRO_ID = get_default_maestro_id()
-        self.form_lote_data["id_maestro"] = DEFAULT_MAESTRO_ID or ""
-        print(f"Maestro ID por defecto: {self.form_lote_data['id_maestro']}")
+
+        # Obtener ID *después* de init_db y asignar al estado del form
+        maestro_id = get_default_maestro_id()
+        self.form_lote_data["id_maestro"] = maestro_id or ""
+        print(f"Maestro ID por defecto asignado al formulario: {self.form_lote_data['id_maestro']}")
+
+        # Ya no necesitas modificar el global DEFAULT_MAESTRO_ID aquí
+        # global DEFAULT_MAESTRO_ID # <-- Eliminar
+        # DEFAULT_MAESTRO_ID = get_default_maestro_id() # <-- Eliminar
+
         # Cargar pendientes desde LocalStorage (async)
-        return State.load_pending_from_storage # Devolver la corutina para que se ejecute
+        return State.load_pending_from_storage
 
     async def load_pending_from_storage(self):
         """Carga los lotes pendientes desde LocalStorage."""
@@ -402,17 +409,19 @@ class State(rx.State):
         if succeeded_count > 0:
             self.load_all_lotes() # Actualizar lista general si hubo cambios
 
+    # state.py - dentro de la clase State
     def _reset_form(self):
-         """ Resetea el diccionario del formulario a valores iniciales. """
-         self.form_lote_data = {
-             "id_maestro": DEFAULT_MAESTRO_ID or "",
-             "tipo_agave": "",
-             "notas_cata": "",
-             "descripcion_proceso": "",
-             "fecha_produccion": "",
-             "video_yt_url": "",
-             "foto_url": ""
-         }
+        """ Resetea el diccionario del formulario a valores iniciales. """
+        maestro_id = get_default_maestro_id() # Re-obtener por si acaso
+        self.form_lote_data = {
+            "id_maestro": maestro_id or "",
+            "tipo_agave": "",
+            "notas_cata": "",
+            "descripcion_proceso": "",
+            "fecha_produccion": "",
+            "video_yt_url": "",
+            "foto_url": ""
+        }
 
     def toggle_offline_mode(self):
         """Cambia el estado de simulación offline."""
@@ -675,8 +684,8 @@ def get_default_maestro_id() -> Optional[str]:
 # init_db() # Comentado temporalmente - llamar explícitamente o al inicio de State
 
 # Obtener ID del maestro por defecto una vez
-DEFAULT_MAESTRO_ID = get_default_maestro_id()
-if not DEFAULT_MAESTRO_ID:
+# DEFAULT_MAESTRO_ID = get_default_maestro_id()
+# if not DEFAULT_MAESTRO_ID:
      print("ADVERTENCIA: No se encontró un maestro por defecto en la BD. El registro de lotes podría fallar.")
      # Podrías forzar la inicialización aquí si es crítico
      # init_db()
@@ -757,7 +766,7 @@ def index() -> rx.Component:
                     # Botón para Simular Offline (para Demo)
                     rx.button(
                         rx.cond(State.is_offline_mode, "Modo Offline (Activo)", "Modo Online"),
-                        rx.icon(tag="wifi-off" if State.is_offline_mode else "wifi", size=16, margin_left="0.5em"),
+                        rx.icon(tag=rx.cond(State.is_offline_mode, "wifi-off", "wifi"), size=16, margin_left="0.5em"),
                         on_click=State.toggle_offline_mode,
                         color_scheme=rx.cond(State.is_offline_mode, "orange", "grass"),
                         variant="soft",
@@ -769,7 +778,7 @@ def index() -> rx.Component:
                         State.has_pending_lotes_var,
                         rx.button(
                             f"Sincronizar ({State.pending_lotes.length()})",
-                             rx.icon(tag="upload-cloud", size=16, margin_left="0.5em"),
+                             rx.icon(tag="cloud_upload", size=16, margin_left="0.5em"),
                             on_click=State.sync_pending_lotes,
                             color_scheme="blue",
                             size="2",
@@ -820,6 +829,7 @@ def index() -> rx.Component:
 ```python
 # camino_del_maguey/pages/lote_viewer_page.py
 import reflex as rx
+from typing import Any
 from ..state import State
 
 # Helper para mostrar info si existe, o un texto por defecto
@@ -850,7 +860,7 @@ def lote_viewer_page() -> rx.Component:
             State.viewer_error_message & ~State.is_loading_lote,
             rx.center(
                 rx.callout.root(
-                    rx.callout.icon(rx.icon("alert-circle")),
+                    rx.callout.icon(rx.icon("circle_alert")),
                     rx.callout.text(State.viewer_error_message),
                     color_scheme="red",
                     size="2"
@@ -870,7 +880,7 @@ def lote_viewer_page() -> rx.Component:
                          rx.cond(
                              State.current_lote_data["foto_perfil_url"],
                              rx.avatar(fallback="M", src=State.current_lote_data["foto_perfil_url"], size="6", radius="full", high_contrast=True),
-                             rx.avatar(fallback=State.current_lote_data["nombre_maestro"][0], size="6", radius="full", high_contrast=True)
+                             rx.avatar(fallback=State.current_lote_data["nombre_maestro"].to(str)[0], size="6", radius="full", high_contrast=True)
                          ),
                          # Info Maestro y Contacto
                          rx.vstack(
@@ -883,7 +893,7 @@ def lote_viewer_page() -> rx.Component:
                                  ),
                                  href=rx.cond(
                                      State.current_lote_data["whatsapp_maestro"],
-                                     "https://wa.me/" + State.current_lote_data["whatsapp_maestro"],
+                                     f"https://wa.me/{State.current_lote_data['whatsapp_maestro']}",
                                      "#"
                                  ),
                                  is_external=True
@@ -962,7 +972,7 @@ def lote_viewer_page() -> rx.Component:
                 rx.box(
                      rx.heading("Trazabilidad", size="3", margin_bottom="0.3em", margin_top="2em"),
                      rx.text(f"ID del Lote:", rx.code(State.current_lote_data['id_lote']), size="2"),
-                     rx.text(f"URL:", rx.code_block(State.current_lote_data['url_qr_plataforma'], can_copy=True, language="text"), size="2"),
+                     rx.text(f"URL:", rx.code_block(State.current_lote_data['url_qr_plataforma'], can_copy=True, language="markup"), size="2"),
                      margin_top="2em", padding="1em", border="1px solid var(--gray-a5)", border_radius="var(--radius-2)", width="100%"
                 ),
 
@@ -1001,12 +1011,13 @@ def lotes_list_page() -> rx.Component:
                              rx.link(
                                  rx.hstack(
                                      rx.icon(tag="package", size=18, margin_right="0.5em"),
-                                     rx.text(f"Agave: ", rx.span(lote['tipo_agave'], weight="bold")),
+                                     rx.text("Agave: "), 
+                                     rx.text(lote['tipo_agave'].to(str), weight="bold"),
                                      rx.spacer(),
-                                     rx.badge(lote['id_lote'].split('-')[0], color_scheme="gray"), # Mostrar parte del ID
+                                     rx.badge(lote['id_lote'].to(str).split('-')[0], color_scheme="gray"), 
                                      align="center", width="100%"
                                  ),
-                                 href=lote['url_qr_plataforma'] # Usa la URL guardada
+                                 href=lote['url_qr_plataforma'].to(str)
                              ),
                              width="100%"
                          )
@@ -1043,7 +1054,7 @@ def form_input(label: str, name: str, placeholder: str, value: rx.Var, on_change
                 rx.cond(required, rx.text("*", color_scheme="red")), # Indicador visual
                 spacing="1"
             ),
-            rx.input.input(
+            rx.input(
                 name=name, # Importante para accesibilidad y forms
                 placeholder=placeholder,
                 value=value,
@@ -1070,7 +1081,7 @@ def form_textarea(label: str, name: str, placeholder: str, value: rx.Var, on_cha
                  value=value,
                  on_change=on_change,
                  width="100%",
-                 rows=rows
+                 rows=str(rows)
              ),
              align_items="start",
              width="100%"
@@ -1089,7 +1100,7 @@ def registration_page() -> rx.Component:
             rx.cond( # Advertencia si no hay maestro ID
                  ~State.form_lote_data["id_maestro"],
                  rx.callout.root(
-                     rx.callout.icon(rx.icon("alert-triangle")),
+                     rx.callout.icon(rx.icon("triangle_alert")),
                      rx.callout.text("Error: No se pudo cargar el ID del maestro. Verifica la base de datos o recarga la página."),
                      color_scheme="red", margin_bottom="1em"
                  )
@@ -1107,7 +1118,7 @@ def registration_page() -> rx.Component:
                      # --- Mensajes de Estado/Error ---
                      rx.cond(
                          State.form_error_message,
-                         rx.callout.root(rx.callout.icon(rx.icon("alert-triangle")), rx.callout.text(State.form_error_message), color_scheme="red", margin_y="1em", size="1")
+                         rx.callout.root(rx.callout.icon(rx.icon("triangle_alert")), rx.callout.text(State.form_error_message), color_scheme="red", margin_y="1em", size="1")
                      ),
                       rx.cond(
                          State.sync_message,
@@ -1153,7 +1164,7 @@ def registration_page() -> rx.Component:
                              href=State.generated_lote_url,
                              is_external=False # Navegación interna
                          ),
-                         rx.code_block(State.generated_lote_url, can_copy=True, language="text"),
+                         rx.code_block(State.generated_lote_url, can_copy=True, language="markup"),
                          align="center",
                          spacing="2",
                          border="1px solid var(--gray-a7)",
@@ -1170,7 +1181,7 @@ def registration_page() -> rx.Component:
                  rx.hstack(
                      rx.button(
                          rx.cond(State.is_offline_mode, "Modo Offline (Activo)", "Modo Online"),
-                         rx.icon(tag="wifi-off" if State.is_offline_mode else "wifi", size=16, margin_left="0.5em"),
+                         rx.icon(tag=rx.cond(State.is_offline_mode, "wifi-off", "wifi"), size=16, margin_left="0.5em"),
                          on_click=State.toggle_offline_mode,
                          color_scheme=rx.cond(State.is_offline_mode, "orange", "grass"),
                          variant="soft", size="2"
@@ -1179,7 +1190,7 @@ def registration_page() -> rx.Component:
                          State.has_pending_lotes_var,
                          rx.button(
                              f"Sincronizar ({State.pending_lotes.length()})",
-                             rx.icon(tag="upload-cloud", size=16, margin_left="0.5em"),
+                             rx.icon(tag="cloud_upload", size=16, margin_left="0.5em"),
                              on_click=State.sync_pending_lotes,
                              color_scheme="blue", size="2",
                              is_disabled=State.is_offline_mode

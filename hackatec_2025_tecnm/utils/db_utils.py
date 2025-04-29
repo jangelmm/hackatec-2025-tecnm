@@ -203,8 +203,8 @@ def get_default_maestro_id() -> Optional[str]:
 # init_db() # Comentado temporalmente - llamar explícitamente o al inicio de State
 
 # Obtener ID del maestro por defecto una vez
-DEFAULT_MAESTRO_ID = get_default_maestro_id()
-if not DEFAULT_MAESTRO_ID:
+# DEFAULT_MAESTRO_ID = get_default_maestro_id()
+# if not DEFAULT_MAESTRO_ID:
      print("ADVERTENCIA: No se encontró un maestro por defecto en la BD. El registro de lotes podría fallar.")
      # Podrías forzar la inicialización aquí si es crítico
      # init_db()

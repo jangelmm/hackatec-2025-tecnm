@@ -8,7 +8,7 @@ from .utils.db_utils import (
     save_lote,
     get_lote_and_maestro,
     get_all_lotes_simple,
-    DEFAULT_MAESTRO_ID,
+    get_default_maestro_id,
     PLATFORM_BASE_URL,
     init_db # Importar función de inicialización
 )
@@ -23,7 +23,7 @@ class State(rx.State):
 
     # --- Estado del Formulario de Registro ---
     form_lote_data: Dict[str, Any] = {
-        "id_maestro": DEFAULT_MAESTRO_ID or "",
+        "id_maestro": "",
         "tipo_agave": "",
         "notas_cata": "",
         "descripcion_proceso": "",
@@ -84,17 +84,23 @@ class State(rx.State):
     # --- Event Handlers ---
 
     # Inicialización
+    # state.py - dentro de la clase State
     def initialize_app(self):
         """Llamado al montar la página inicial para preparar la BD y cargar pendientes."""
         print("Inicializando base de datos...")
         init_db() # Asegura que la BD y tablas existan
-        # Actualizar ID maestro por si se creó en init_db
-        global DEFAULT_MAESTRO_ID
-        DEFAULT_MAESTRO_ID = get_default_maestro_id()
-        self.form_lote_data["id_maestro"] = DEFAULT_MAESTRO_ID or ""
-        print(f"Maestro ID por defecto: {self.form_lote_data['id_maestro']}")
+
+        # Obtener ID *después* de init_db y asignar al estado del form
+        maestro_id = get_default_maestro_id()
+        self.form_lote_data["id_maestro"] = maestro_id or ""
+        print(f"Maestro ID por defecto asignado al formulario: {self.form_lote_data['id_maestro']}")
+
+        # Ya no necesitas modificar el global DEFAULT_MAESTRO_ID aquí
+        # global DEFAULT_MAESTRO_ID # <-- Eliminar
+        # DEFAULT_MAESTRO_ID = get_default_maestro_id() # <-- Eliminar
+
         # Cargar pendientes desde LocalStorage (async)
-        return State.load_pending_from_storage # Devolver la corutina para que se ejecute
+        return State.load_pending_from_storage
 
     async def load_pending_from_storage(self):
         """Carga los lotes pendientes desde LocalStorage."""
@@ -217,17 +223,19 @@ class State(rx.State):
         if succeeded_count > 0:
             self.load_all_lotes() # Actualizar lista general si hubo cambios
 
+    # state.py - dentro de la clase State
     def _reset_form(self):
-         """ Resetea el diccionario del formulario a valores iniciales. """
-         self.form_lote_data = {
-             "id_maestro": DEFAULT_MAESTRO_ID or "",
-             "tipo_agave": "",
-             "notas_cata": "",
-             "descripcion_proceso": "",
-             "fecha_produccion": "",
-             "video_yt_url": "",
-             "foto_url": ""
-         }
+        """ Resetea el diccionario del formulario a valores iniciales. """
+        maestro_id = get_default_maestro_id() # Re-obtener por si acaso
+        self.form_lote_data = {
+            "id_maestro": maestro_id or "",
+            "tipo_agave": "",
+            "notas_cata": "",
+            "descripcion_proceso": "",
+            "fecha_produccion": "",
+            "video_yt_url": "",
+            "foto_url": ""
+        }
 
     def toggle_offline_mode(self):
         """Cambia el estado de simulación offline."""
