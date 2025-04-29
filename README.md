@@ -163,9 +163,9 @@ graph TD
 
 ### **1.4 Visión del Producto**  
 **Nombre:** **Raíces Conectadas**  
-**Eslogan:** *"Camino del Maguey."*  
+**Eslogan:** *"Camino del Maguey.(Nehza Dohba)"*  
 **Elevator Pitch:**  
-> *"Camino del Maguey es una plataforma web que elimina intermediarios en la venta de mezcal artesanal. Cada botella incluye un QR con acceso del maestro mezcalero narrando su proceso en zapoteco, garantizando autenticidad y comercio justo. ¡Conectamos tradición con innovación!"*  
+> *"Camino del Maguey (Nehza Dohba) es una plataforma web que elimina intermediarios en la venta de mezcal artesanal. Cada botella incluye un QR con acceso del maestro mezcalero narrando su proceso en zapoteco, garantizando autenticidad y comercio justo. ¡Conectamos tradición con innovación!"*  
 
 **Ventajas Competitivas:**  
 1. 🎥 **Videos en YouTube** (gratis, sin costos de almacenamiento).  
@@ -357,5 +357,5 @@ POLYGON_RPC_URL=https://polygon-rpc.com
 
 **Repositorio GitHub:**  
 ```
-https://github.com/camino_maguey/reflex-mvp
+https://github.com/camino_del_maguey/reflex-mvp
 ``` 
